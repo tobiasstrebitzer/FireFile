@@ -1,0 +1,27 @@
+<?xml version="1.0"?> 
+<!DOCTYPE window SYSTEM "chrome://FireFile/locale/firefile.dtd">
+<?xml-stylesheet href="chrome://FireFile/content/firefile.css" type="text/css"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="chrome://FireFile/content/firefile.js"/>
+  <script type="application/x-javascript" src="chrome://FireFile/content/changepanel.js"/>
+  <commandset id="mainCommandSet">
+    <command id="cmd_FireFileSaveCSS" oncommand="Firebug.FireFile.saveAllChanges()"/>
+  </commandset>
+  <stringbundleset id="stringbundleset">
+      <stringbundle id="strings_firefile" src="chrome://FireFile/locale/firefile.properties"/>
+  </stringbundleset>
+  <keyset id="mainKeyset">
+      <key id="key_save" key="s" command="cmd_FireFileSaveCSS" modifiers="control,shift"/>
+  </keyset>
+  <statusbar id="status-bar">
+    <statusbarpanel id="firefile-status" status="Loaded" onclick="var browser = FirebugChrome.getCurrentBrowser();if (!FirebugContext || !browser.showFirebug) {var created = TabWatcher.watchBrowser(browser);}if (Firebug.isMinimized()) {Firebug.unMinimize();}Firebug.FireFile.clickStatus();">
+      <image tooltiptext="&firefile.Statuslabel;" id="firefile-status-image" src="chrome://FireFile/skin/status_disabled.png"/>
+    </statusbarpanel>
+  </statusbar>
+  <hbox id="fbCSSButtons" collapsed="true">
+      <toolbarseparator class="fbPanelSpecificButtonsSeparator"/>
+      <div id="ffCssPanelSaveButtonContainer">
+        <span id="ffCssPanelSaveButton" tooltiptext="&firefile.ClickToSaveChanges;" class="disabled" onclick="Firebug.FireFile.saveCurrentStylesheet()"></span>
+      </div>
+  </hbox>
+</overlay>

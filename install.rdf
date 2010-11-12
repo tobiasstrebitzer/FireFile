@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<RDF xmlns="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:em="http://www.mozilla.org/2004/em-rdf#">
+  <Description about="urn:mozilla:install-manifest">
+    <em:id>firefile@strebitzer.at</em:id>
+    <em:type>2</em:type>
+    <em:version>0.8.2</em:version>
+  	<em:iconURL>chrome://FireFile/skin/firefile_32.png</em:iconURL>
+  	<em:contributor></em:contributor>
+    <em:name>FireFile</em:name>
+    <em:description>Firebug extension to save the CSS files edited with firebug live to your web server.</em:description>
+    <em:creator>Tobias Strebitzer</em:creator>
+    <em:homepageURL>http://www.strebitzer.at</em:homepageURL>
+    <em:targetApplication>
+		  <Description>
+				<em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
+				<em:minVersion>3.0</em:minVersion>
+				<em:maxVersion>3.7a1pre</em:maxVersion>
+			</Description>
+		</em:targetApplication>
+	</Description>
+</RDF>
