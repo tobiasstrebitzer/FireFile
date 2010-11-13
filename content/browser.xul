@@ -2,8 +2,9 @@
 <!DOCTYPE window SYSTEM "chrome://FireFile/locale/firefile.dtd">
 <?xml-stylesheet href="chrome://FireFile/content/firefile.css" type="text/css"?>
 <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
-  <script type="application/x-javascript" src="chrome://FireFile/content/firefile.js"/>
-  <script type="application/x-javascript" src="chrome://FireFile/content/changepanel.js"/>
+  	<script type="application/x-javascript" src="chrome://FireFile/content/firefile.js"/>
+  	<script type="application/x-javascript" src="chrome://FireFile/content/changepanel.js"/>
+	<script type="application/x-javascript" src="chrome://FireFile/content/firefileCssTransformer.js"/>
   <commandset id="mainCommandSet">
     <command id="cmd_FireFileSaveCSS" oncommand="Firebug.FireFile.saveAllChanges()"/>
   </commandset>
