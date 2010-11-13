@@ -171,6 +171,7 @@ FBL.ns(function() { with(FBL) {
 		    inspector_switch_css: true,
 		    enable_debug_mode: false,
 			remove_empty_styles: true,
+			autofix_css3: true,
 			compress_css: false
 		},
 		
@@ -192,7 +193,9 @@ FBL.ns(function() { with(FBL) {
                     var stylesheet = Firebug.FireFile.modifiedStylesheets[index];
 
 					Firebug.Console.log(Firebug.FireFile);
-                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], true);
+                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], Firebug.FireFile.prefs.compress_css);
+					if(contents === false) {throw "Unable to create css file";}
+					
                     var href = Firebug.FireFile.modifiedStylesheets[index].href;
                     var filetype = "stylesheet";
                 	var registered_site = Firebug.FireFile.getHrefInAllowedSites(href);                    
@@ -272,6 +275,9 @@ FBL.ns(function() { with(FBL) {
 			// STYLE SUB PANEL HOOKS
 			Firebug.chrome.switchToPanel(context, "html");
 			FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
+			
+			// Comments test
+			// Firebug.FireFile.CssTransformer.commentsTest();
             
             // LOAD CSS
             this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
@@ -751,7 +757,7 @@ FBL.ns(function() { with(FBL) {
                 try{
                     // GET STYLESHEET AND FILENAME
                     var styleSheet = Firebug.FireFile.modifiedStylesheets[index];    				
-                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(styleSheet, true);
+                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(styleSheet, Firebug.FireFile.prefs.compress_css);
                 	var save_path = Firebug.FireFile.getDownloadPathDialog(this.filenameFromHref(styleSheet.href));
                 }catch(exception) {
                     // RETURN ON ERROR
