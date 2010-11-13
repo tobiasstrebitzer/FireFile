@@ -222,8 +222,9 @@ FBL.ns(function() { with(FBL) {
             }  
 		},
 		
-		showContext: function() {
-
+		showContext: function(browser, context) {
+			
+			
 			// CHECK IF ALLOWED FOR THIS PAGE
 			var prePath = top.gBrowser.currentURI.prePath;
 			if(this.hasPrefSitesWithUri(prePath)) {
@@ -234,7 +235,9 @@ FBL.ns(function() { with(FBL) {
                 // CHECK FOR FIREFILE PAGE
  				var site_script = FirebugContext.name;
                 var keyholder = FirebugContext.global.document.getElementById("firefile-key-holder");
-                if (keyholder != undefined) {
+				
+                if (keyholder) {
+	
                     if (this.styleSheetIndexByHref(site_script) === false) {                            
                         var result = PromptService.confirm(null, Firebug.FireFile.__("AddToFireFile"), Firebug.FireFile.__("DoYouWantToAddTheSite", this.getHostFromHref(site_script)));
                         if(result === true) {
@@ -254,10 +257,12 @@ FBL.ns(function() { with(FBL) {
                         }
                     }
                 }
+
 			}
-			
+						
 			// STYLE SUB PANEL HOOKS
-            FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
+			Firebug.chrome.switchToPanel(context, "html");
+			FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
             
             // LOAD CSS
             this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
@@ -277,7 +282,7 @@ FBL.ns(function() { with(FBL) {
             }
         },
         initialize: function() {
-            
+
             this.hookIntoHtmlContext();
             this.hookIntoCSSPanel();
             this.modifiedStylesheets = new Array();
@@ -307,8 +312,9 @@ FBL.ns(function() { with(FBL) {
                     top.FirebugChrome.selectSidePanel("css");
                 }
             };
-            
+
             this.initialized = true;
+
         },
         loadCss: function(url, doc) {
             var newCss = doc.createElement("link");
@@ -503,8 +509,16 @@ FBL.ns(function() { with(FBL) {
                             }
                         });
                     } 
-
                 }
+
+				result.push({
+					label: "+Custom...",
+					nol10n: true,
+					command: function() {
+						Firebug.CSSModule.insertRule(styleSheet,window.prompt('Please enter custom selector :',tag ) + "{}" , insertIndex);
+						FirebugContext.getPanel("css").updateCascadeView(node);
+					}
+				});
 
                 return result;
                 
@@ -647,8 +661,6 @@ FBL.ns(function() { with(FBL) {
             return false;
         },
         clickStatus: function() {
-            
-
 
             // OPEN SITES PANEL
             top.FirebugChrome.selectPanel("html");
@@ -658,7 +670,7 @@ FBL.ns(function() { with(FBL) {
         __: function(msg) {
             try{
                 if (Firebug.FireFile.stringBundle == undefined) {
-                    categoryManager.addCategoryEntry("strings_firefile", "chrome://FireFile/locale/firefile.properties", "", true, true);
+                    categoryManager.addCategoryEntry("strings_firefile", "chrome://FireFile/locale/firefile.properties", "", false, true);
                     Firebug.FireFile.stringBundle = stringBundleService.createExtensibleBundle("strings_firefile");
                 }
                 msg = Firebug.FireFile.stringBundle.GetStringFromName(msg);
@@ -672,6 +684,7 @@ FBL.ns(function() { with(FBL) {
                 
                 return msg;
             }catch(ex) {
+				Firebug.Console.log(ex);
                 return msg;
             }
         },
@@ -1027,7 +1040,6 @@ FBL.ns(function() { with(FBL) {
 				}else{
 				    label += this.notifyCount+" "+Firebug.FireFile.__(msg);
 				}
-				
 				
 				notifyBox.getNotificationWithValue(barid).label = label;
 			}

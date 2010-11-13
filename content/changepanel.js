@@ -92,7 +92,7 @@ FBL.ns(function() { with(FBL) {
 
     function FireFilePanel() {}
 
-    FireFilePanel.prototype = extend(Firebug.SourceBoxPanel,{
+    FireFilePanel.prototype = extend(Firebug.Panel,{
 
         template: domplate({
             changesList:
@@ -294,10 +294,18 @@ FBL.ns(function() { with(FBL) {
                     command: bindFixed(Firebug.FireFile.togglePref, Firebug.FireFile, "debug") }
             ];
             return ret;
-        }
+        },
+
+	    getDecorator: function(sourceBox) {
+	        return Firebug.ScriptPanel.decorator;
+	    }
 
     });
     
-    Firebug.registerPanel(FireFilePanel);
+	try{
+    	Firebug.registerPanel(FireFilePanel);
+	}catch(err){
+		Firebug.Console.log(err);
+	} 
     
 }});
