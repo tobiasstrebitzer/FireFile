@@ -284,15 +284,23 @@ FBL.ns(function() { with(FBL) {
         },
 
         getOptionsMenuItems: function() {
+			
+			// Actions
             var ret = [
-                {label: Firebug.FireFile.__("SaveAllChanges"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } },
-                {label: Firebug.FireFile.__("EnableNotifications"), tooltiptext: $STR("EnableNotificationsTooltip", "strings_firefile"), type: "checkbox", checked: Firebug.FireFile.prefs.enable_notifications,
-                    command: bindFixed(Firebug.FireFile.togglePref, Firebug.FireFile, "enable_notifications") },
-                {label: Firebug.FireFile.__("InspectorSwitchCss"), tooltiptext: $STR("InspectorSwitchCssTooltip", "strings_firefile"), type: "checkbox", checked: Firebug.FireFile.prefs.inspector_switch_css,
-                    command: bindFixed(Firebug.FireFile.togglePref, Firebug.FireFile, "inspector_switch_css") },
-                {label: Firebug.FireFile.__("EnableDebugMode"), tooltiptext: $STR("EnableDebugModeTooltip", "strings_firefile"), type: "checkbox", checked: Firebug.FireFile.prefs.debug,
-                    command: bindFixed(Firebug.FireFile.togglePref, Firebug.FireFile, "debug") }
+                {label: Firebug.FireFile.__("save_all_changes"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } }
             ];
+
+			// Toggles
+			for(var pref in Firebug.FireFile.prefs) {
+				ret.push({
+					label: Firebug.FireFile.__(pref),
+					tooltiptext: $STR(pref + "_tooltip", "strings_firefile"),
+					type: "checkbox",
+					checked: Firebug.FireFile.prefs[pref],
+		            command: bindFixed(Firebug.FireFile.togglePref, Firebug.FireFile, pref)
+				});
+			}
+
             return ret;
         },
 

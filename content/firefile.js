@@ -165,10 +165,13 @@ FBL.ns(function() { with(FBL) {
 		ffEnabled: false,
 		htmlEnabled: false,
 		currentURI: "",
+
 		prefs: {
 		    enable_notifications: false,
 		    inspector_switch_css: true,
-		    debug: false
+		    enable_debug_mode: false,
+			remove_empty_styles: true,
+			compress_css: false
 		},
 		
 		// TIMEOUT HANDLING
@@ -187,7 +190,9 @@ FBL.ns(function() { with(FBL) {
                     // GET STYLESHEET DATA
                     var index = Firebug.FireFile.styleSheetIndexByHref(href);
                     var stylesheet = Firebug.FireFile.modifiedStylesheets[index];
-                    var contents = Firebug.FireFile.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], true);
+
+					Firebug.Console.log(Firebug.FireFile);
+                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], true);
                     var href = Firebug.FireFile.modifiedStylesheets[index].href;
                     var filetype = "stylesheet";
                 	var registered_site = Firebug.FireFile.getHrefInAllowedSites(href);                    
@@ -218,6 +223,10 @@ FBL.ns(function() { with(FBL) {
                 Firebug.FireFile.styleSheetStatus[href] = "error";
                 // CALL REFRESHER
                 Firebug.FireFile.visualUpdateHandler();
+				
+			    if(Firebug.FireFile.prefs.debug) {
+			        Firebug.Console.log(ex);
+			    }
                 return false;
             }  
 		},
@@ -742,7 +751,7 @@ FBL.ns(function() { with(FBL) {
                 try{
                     // GET STYLESHEET AND FILENAME
                     var styleSheet = Firebug.FireFile.modifiedStylesheets[index];    				
-                    var contents = Firebug.FireFile.generateCSSContents(styleSheet, true);
+                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(styleSheet, true);
                 	var save_path = Firebug.FireFile.getDownloadPathDialog(this.filenameFromHref(styleSheet.href));
                 }catch(exception) {
                     // RETURN ON ERROR
@@ -934,25 +943,6 @@ FBL.ns(function() { with(FBL) {
             
             return retVal;
         },
-        generateCSSContents: function(styleSheet, format) {
-            var retVal = "";
-            
-            // FETCH DATA
-            for (var i = 0; i < styleSheet.cssRules.length; i++) {
-                retVal += styleSheet.cssRules[i].cssText;
-            }
-            
-            // FORMAT DATA
-            if(format != undefined && format === true) {                    
-                // SPACING, TABS AND LINES
-                retVal = retVal.split("}").join("}\n\n");
-                retVal = retVal.split("{ ").join("{\n\t");
-                retVal = retVal.split("; ").join(";\n\t");
-                retVal = retVal.split("\t}").join("}");
-            }
-            
-            return retVal;
-        },
 		onSaveSuccess: function(success, styleindex, msg) {
 			Firebug.FireFile.setStatus("closed");
 			Firebug.FireFile.updateNotify("fferror", 8, -1000, msg);
@@ -1061,7 +1051,7 @@ FBL.ns(function() { with(FBL) {
             if(callback != undefined) {
                 callback.call(this);
             }
-        },
+        }
     });
 
     Firebug.registerModule(Firebug.FireFile);
