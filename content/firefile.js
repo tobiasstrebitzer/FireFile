@@ -49,6 +49,16 @@ FBL.ns(function() { with(FBL) {
         isSelectorEditable: function(rule)
         {
             return rule.isSelectorEditable && this.isEditable(rule);
+        },
+        getComments: function(object) {
+			if(!Firebug.FireFile.prefs.display_comments) { 
+				return [];
+			}
+			var result = Firebug.FireFile.CssTransformer.getCommentForRule(object.rule);
+			if(result !== false) {
+				return result.split("\n");
+			}
+            return [];
         }
     };
 
@@ -79,6 +89,11 @@ FBL.ns(function() { with(FBL) {
                 $editGroup: "$rule|isSelectorEditable",
                 _repObject: "$rule.rule",
                 "ruleId": "$rule.id", role : 'presentation'},
+			DIV({class: "ruleComment", title: "Comment"}, 
+	            FOR("comment", "$rule|getComments",
+	            	DIV({"class": "ruleCommentLine"}, "$comment")
+	            )
+		  	),
             DIV({class: "cssHead focusRow", role : 'listitem'},
                 SPAN({class: "cssSelector", $editable: "$rule|isSelectorEditable"}, "$rule.selector"), " {"
             ),
@@ -169,10 +184,11 @@ FBL.ns(function() { with(FBL) {
 		prefs: {
 		    enable_notifications: false,
 		    inspector_switch_css: true,
-		    enable_debug_mode: false,
+			display_comments: true,
 			remove_empty_styles: true,
 			autofix_css3: true,
-			compress_css: false
+			compress_css: false,
+			enable_debug_mode: false
 		},
 		
 		// TIMEOUT HANDLING
@@ -192,7 +208,6 @@ FBL.ns(function() { with(FBL) {
                     var index = Firebug.FireFile.styleSheetIndexByHref(href);
                     var stylesheet = Firebug.FireFile.modifiedStylesheets[index];
 
-					Firebug.Console.log(Firebug.FireFile);
                     var contents = Firebug.FireFile.CssTransformer.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], Firebug.FireFile.prefs.compress_css);
 					if(contents === false) {throw "Unable to create css file";}
 					
@@ -233,9 +248,14 @@ FBL.ns(function() { with(FBL) {
                 return false;
             }  
 		},
-		
+		initContext: function(context, persistedState) {
+
+	    },
 		showContext: function(browser, context) {
+			alert("show");
+			alert(context);
 			
+			if(!context) { return; }
 			
 			// CHECK IF ALLOWED FOR THIS PAGE
 			var prePath = top.gBrowser.currentURI.prePath;
@@ -271,16 +291,16 @@ FBL.ns(function() { with(FBL) {
                 }
 
 			}
-						
+
 			// STYLE SUB PANEL HOOKS
-			Firebug.chrome.switchToPanel(context, "html");
-			FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
-			
-			// Comments test
-			// Firebug.FireFile.CssTransformer.commentsTest();
-            
-            // LOAD CSS
-            this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
+			try{
+				Firebug.chrome.switchToPanel(context, "html");
+				FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
+	            this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
+			}catch(ex){
+				alert(ex);
+				Firebug.Console.log(ex);
+			}
 			
 		},
 		enableFireFile: function() {
@@ -292,12 +312,19 @@ FBL.ns(function() { with(FBL) {
 			this.setStatus("disabled");
 		},
         enable: function() {
-            if (!this.initialized) {
+            if (!this.initialized) {				
                 this.initialize();
             }
         },
         initialize: function() {
 
+			// Setup CSS View
+			Firebug.Console.log("hook");
+			Firebug.Console.log(FirebugContext.getPanel("css"));
+			FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
+			this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
+
+			// Setup System Hooks
             this.hookIntoHtmlContext();
             this.hookIntoCSSPanel();
             this.modifiedStylesheets = new Array();
@@ -407,6 +434,7 @@ FBL.ns(function() { with(FBL) {
             return false;
         },
         visualUpdateHandler: function(force) {
+				
             // WHERE AM I?
             var panel = Firebug.chrome.getSelectedPanel();
             var sidePanel = Firebug.chrome.getSelectedSidePanel();
@@ -699,7 +727,9 @@ FBL.ns(function() { with(FBL) {
                 
                 return msg;
             }catch(ex) {
-				Firebug.Console.log(ex);
+			    if(Firebug.FireFile.prefs.debug) {
+			        Firebug.Console.log(ex);
+			    }
                 return msg;
             }
         },
