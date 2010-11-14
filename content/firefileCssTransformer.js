@@ -12,30 +12,13 @@ FBL.ns(function() { with(FBL) {
 			"-moz-box-shadow": ["box-shadow", "-webkit-box-shadow", "-khtml-box-shadow"]
 		},
 		
-		commentsTest: function() {
-			// Get test stylesheet (style1.css)
-			var testSheet = FirebugContext.global.document.styleSheets[1];
-			
-			// Get test rule (outer_div)
-			var testRule = testSheet.cssRules[1];
-			
-			// Output to console
-			Firebug.Console.log(testRule);
-			
-			// Get Comment
-			var comment = this.getCommentForRule(testRule);
-			
-			Firebug.Console.log("comment");
-			Firebug.Console.log(comment);
-			
-		},
-		
 		getCommentForRule: function(rule) {
 			
 			var domUtils = CCSV("@mozilla.org/inspector/dom-utils;1", "inIDOMUtils");
-			
-			// getStyleSheetCSS
 			var parentSheet = rule.parentStyleSheet;
+			if(!parentSheet) { 
+				return false; 
+			}
 			var styleContents = this.getStyleSheetContents(parentSheet, FirebugContext);
 			var styleLines = styleContents.split("\n");
 			var lineIndex = domUtils.getRuleLine(rule)-1;
@@ -43,7 +26,7 @@ FBL.ns(function() { with(FBL) {
 			
 			// Build Css Portion up to rule
 			var selectorText = rule.selectorText.replace(".", "\.");
-			var needle = new RegExp('[^}]+(\\/\\*[^/]+\\*\\/)[^}]*\\s' + selectorText + "\\s*\\{", "");
+			var needle = new RegExp('[^}]*(\\/\\*[^/]+\\*\\/)[^}]*\\s' + selectorText + "\\s*\\{", "");
 			var result = styleContents.match(needle);
 
 			if(result) {
@@ -108,7 +91,7 @@ FBL.ns(function() { with(FBL) {
 					}
 	            }
 			}catch(err) {
-				Firebug.Console.log(err);
+				// Firebug.Console.log(err);
 			}
             
 			return retVal;

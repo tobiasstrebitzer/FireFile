@@ -1,5 +1,4 @@
 /* CSS PANEL */
-
 div#ffCssPanelSaveButtonContainer span {
     background: transparent url(chrome://FireFile/skin/firefile_save.png) no-repeat 1px 1px;
     width: 16px;
@@ -190,4 +189,8 @@ div.cssSourceLinkContainer div.autosave {
 
 div.cssSourceLinkContainer div.error {
     background: url(chrome://FireFile/skin/firefile_save_error.png) !important;
+}
+
+div.ruleCommentLine {
+	color: #004AFF;x
 }
