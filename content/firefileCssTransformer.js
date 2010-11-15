@@ -52,12 +52,7 @@ FBL.ns(function() { with(FBL) {
 	            for (var i=0; i < styleSheet.cssRules.length; i++) {
 					var style = styleSheet.cssRules[i];
 					var props = this.getCssProps(style);
-					Firebug.Console.log(props);
 					var styleString = "";
-					
-					Firebug.Console.log(style);
-					Firebug.Console.log(props);
-					
 					
 					// Check for empty styles
 					if(props.length > 0 || Firebug.FireFile.prefs.remove_empty_styles === false) {
@@ -95,12 +90,9 @@ FBL.ns(function() { with(FBL) {
 					}
 	            }
 			}catch(err) {
-				Firebug.Console.log(err);
+				// Firebug.Console.log(err);
 			}
 			
-			Firebug.Console.log(retVal);
-            
-			return false;
 			return retVal;
         },
 		
