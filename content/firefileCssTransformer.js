@@ -3,6 +3,8 @@ FBL.ns(function() { with(FBL) {
 
 	Firebug.FireFile.CssTransformer = extend(Firebug.Module, {
 		
+		commentMap: [],
+		
 		css3CompatibilityList: {
 			"-moz-border-radius": ["border-radius", "-webkit-border-radius", "-khtml-border-radius"],
 			"-moz-border-radius-topleft": ["border-top-left-radius", "-webkit-border-top-left-radius", "-khtml-border-top-left-radius"],
@@ -12,27 +14,53 @@ FBL.ns(function() { with(FBL) {
 			"-moz-box-shadow": ["box-shadow", "-webkit-box-shadow", "-khtml-box-shadow"]
 		},
 		
+		getCommentsWithSelector: function(styleSheet) {
+			
+			// Load Comments from Cache
+			if(this.commentMap[styleSheet.href] != undefined) {
+				return this.commentMap[styleSheet.href];
+			}
+			
+			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
+			var result;
+			var regexp = /(\/\*[^*]+\*\/)[\s]+([^{]+){/g;
+			var commentList = {};
+			result = regexp.exec(styleContents);
+			while(result = regexp.exec(styleContents)) {
+				commentList[this.powerTrim(result[2])] = this.powerTrim(result[1]);
+			}
+			
+			this.commentMap[styleSheet.href] = commentList;
+			
+			return commentList;
+		},
+		
+		powerTrim: function(str) {
+			str = str.replace(/^\s+/, '');
+			for (var i = str.length - 1; i >= 0; i--) {
+				if (/\S/.test(str.charAt(i))) {
+					str = str.substring(0, i + 1);
+					break;
+				}
+			}
+			return str;
+		},
+		
 		getCommentForRule: function(rule) {
 			
-			var domUtils = CCSV("@mozilla.org/inspector/dom-utils;1", "inIDOMUtils");
-			var parentSheet = rule.parentStyleSheet;
-			if(!parentSheet) { 
-				return false; 
-			}
-			var styleContents = this.getStyleSheetContents(parentSheet, FirebugContext);
-			var styleLines = styleContents.split("\n");
-			var lineIndex = domUtils.getRuleLine(rule)-1;
-			var commentLineIndex = domUtils.getRuleLine(rule)-2;
+			// Get Stylesheet
+			var styleSheet = rule.parentStyleSheet;
+			if(!styleSheet) { return false; }
 			
-			// Build Css Portion up to rule
-			var selectorText = rule.selectorText.replace(".", "\.");
-			var needle = new RegExp('[^}]*(\\/\\*[^/]+\\*\\/)[^}]*\\s' + selectorText + "\\s*\\{", "");
-			var result = styleContents.match(needle);
-
-			if(result) {
-				return RegExp.$1;
+			// Load Comment Array
+			var commentMap = this.getCommentsWithSelector(styleSheet);
+			if(commentMap != undefined) {				
+				var index = this.powerTrim(rule.selectorText);
+				if(commentMap[index] != undefined) {
+					return commentMap[index];
+				}
 			}
-			
+						
 			return false;
 		},
 		
@@ -49,6 +77,15 @@ FBL.ns(function() { with(FBL) {
             
             // FETCH DATA
 			try{
+				
+				// Get Original stylesheet contents
+				
+				// Get Comments Map
+				if(Firebug.FireFile.prefs.display_comments && !compress) {
+					var commentMap = this.getCommentsWithSelector(styleSheet);
+				}
+
+				// Loop through Rules
 	            for (var i=0; i < styleSheet.cssRules.length; i++) {
 					var style = styleSheet.cssRules[i];
 					var props = this.getCssProps(style);
@@ -59,7 +96,6 @@ FBL.ns(function() { with(FBL) {
 
 						// Append Rules
 						for(var j=0;j<props.length;j++) {
-
 
 							// Append Rule as is
 							styleString += this.createRuleString(props[j].name, props[j].value, compress);
@@ -73,14 +109,12 @@ FBL.ns(function() { with(FBL) {
 									}
 								}
 							}
-
 						}
 
 						// Append Comment if exists
-						var comment = this.getCommentForRule(style);
-						if(comment) {
-							if(!compress) {
-								retVal += comment + "\n";
+						if(Firebug.FireFile.prefs.display_comments && !compress) {
+							if(commentMap[style.selectorText] != undefined) {
+								retVal += commentMap[style.selectorText] + "\n";
 							}
 						}
 

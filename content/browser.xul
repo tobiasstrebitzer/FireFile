@@ -5,14 +5,17 @@
   	<script type="application/x-javascript" src="chrome://FireFile/content/firefile.js"/>
   	<script type="application/x-javascript" src="chrome://FireFile/content/changepanel.js"/>
 	<script type="application/x-javascript" src="chrome://FireFile/content/firefileCssTransformer.js"/>
+	<script type="application/x-javascript" src="chrome://FireFile/content/FirefileCssTests.js"/>
   <commandset id="mainCommandSet">
     <command id="cmd_FireFileSaveCSS" oncommand="Firebug.FireFile.saveAllChanges()"/>
+	<command id="cmd_FireFileDebugCSS" oncommand="Firebug.FireFile.CssTests.start()"/>
   </commandset>
   <stringbundleset id="stringbundleset">
       <stringbundle id="strings_firefile" src="chrome://FireFile/locale/firefile.properties"/>
   </stringbundleset>
   <keyset id="mainKeyset">
-      <key id="key_save" key="s" command="cmd_FireFileSaveCSS" modifiers="control,shift"/>
+        <key id="key_save" key="s" command="cmd_FireFileSaveCSS" modifiers="control,shift"/>
+		<key id="key_debug" key="d" command="cmd_FireFileDebugCSS" modifiers="control,shift"/>
   </keyset>
   <statusbar id="status-bar">
     <statusbarpanel id="firefile-status" status="Loaded" onclick="var browser = FirebugChrome.getCurrentBrowser();if (!FirebugContext || !browser.showFirebug) {var created = TabWatcher.watchBrowser(browser);}if (Firebug.isMinimized()) {Firebug.unMinimize();}Firebug.FireFile.clickStatus();">

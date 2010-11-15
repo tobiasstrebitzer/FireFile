@@ -54,9 +54,13 @@ FBL.ns(function() { with(FBL) {
 			if(!Firebug.FireFile.prefs.display_comments) { 
 				return [];
 			}
+			try{
 			var result = Firebug.FireFile.CssTransformer.getCommentForRule(object.rule);
 			if(result !== false) {
 				return result.split("\n");
+			}
+			}catch(ex){
+				Firebug.Console.log(ex);
 			}
             return [];
         }
@@ -242,7 +246,7 @@ FBL.ns(function() { with(FBL) {
                 // CALL REFRESHER
                 Firebug.FireFile.visualUpdateHandler();
 				
-			    if(Firebug.FireFile.prefs.debug) {
+			    if(Firebug.FireFile.prefs.enable_debug_mode) {
 			        Firebug.Console.log(ex);
 			    }
                 return false;
@@ -725,7 +729,7 @@ FBL.ns(function() { with(FBL) {
                 
                 return msg;
             }catch(ex) {
-			    if(Firebug.FireFile.prefs.debug) {
+			    if(Firebug.FireFile.prefs.enable_debug_mode) {
 			        Firebug.Console.log(ex);
 			    }
                 return msg;
@@ -875,7 +879,7 @@ FBL.ns(function() { with(FBL) {
 				var xmlhttp = e.currentTarget;				
 				// DEBUG
 				try{
-				    if(Firebug.FireFile.prefs.debug) {
+				    if(Firebug.FireFile.prefs.enable_debug_mode) {
 				        Firebug.Console.log("response ["+xmlhttp.readyState+"]:");
 				        Firebug.Console.log(xmlhttp.responseText);
 				    }
@@ -936,7 +940,7 @@ FBL.ns(function() { with(FBL) {
             // START TRANSFER
             xmlhttp.send(filetype + "=" + this.encode64(contents) + "&file=" + this.encode64(href) + "&action=save&code=" + site.hash + "&index="+index);
             
-		    if(Firebug.FireFile.prefs.debug) {
+		    if(Firebug.FireFile.prefs.enable_debug_mode) {
 		        Firebug.Console.log("params:");
 		        Firebug.Console.log({
 		            siteurl: site.url,
