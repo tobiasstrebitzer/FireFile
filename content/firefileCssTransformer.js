@@ -52,15 +52,19 @@ FBL.ns(function() { with(FBL) {
 	            for (var i=0; i < styleSheet.cssRules.length; i++) {
 					var style = styleSheet.cssRules[i];
 					var props = this.getCssProps(style);
+					Firebug.Console.log(props);
 					var styleString = "";
+					
+					Firebug.Console.log(style);
+					Firebug.Console.log(props);
+					
 					
 					// Check for empty styles
 					if(props.length > 0 || Firebug.FireFile.prefs.remove_empty_styles === false) {
 
-						// Todo: Fetch Comments
-
 						// Append Rules
 						for(var j=0;j<props.length;j++) {
+
 
 							// Append Rule as is
 							styleString += this.createRuleString(props[j].name, props[j].value, compress);
@@ -91,9 +95,12 @@ FBL.ns(function() { with(FBL) {
 					}
 	            }
 			}catch(err) {
-				// Firebug.Console.log(err);
+				Firebug.Console.log(err);
 			}
+			
+			Firebug.Console.log(retVal);
             
+			return false;
 			return retVal;
         },
 		
@@ -114,8 +121,125 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		getCssProps: function(style) {
-			return FirebugContext.getPanel("css").parseCSSProps(style, false);
-		}
+	        var props = [];
+
+			// Fix: remove selector from cssText
+			var cssText = style.cssText.split(style.selectorText).join("");
+            var lines = cssText.match(/(?:[^;\(]*(?:\([^\)]*?\))?[^;\(]*)*;?/g);
+            var propRE = /\s*([^:\s]*)\s*:\s*(.*?)\s*(! important)?;?$/;
+            var line,i=0;
+            while(line=lines[i++]){
+                m = propRE.exec(line);
+                if(!m) {
+					continue;
+				}
+
+                if (m[2]) {
+					this.addProperty(m[1], m[2], !!m[3], false, false, props);
+				}
+            };
+
+	        return props;
+		},
+
+	    addProperty: function(name, value, important, disabled, inheritMode, props) {
+	        if (inheritMode && !this.inheritedStyleNames[name]) {
+				return;
+			}
+
+	        name = this.translateName(name, value);
+	        if (name)
+	        {
+	            value = this.stripUnits(this.rgbToHex(value));
+	            important = important ? " !important" : "";
+
+	            var prop = {name: name, value: value, important: important, disabled: disabled};
+	            props.push(prop);
+	        }
+	    },
+	
+		stripUnits: function(value) {
+		    // remove units from '0px', '0em' etc. leave non-zero units in-tact.
+		    return value.replace(/(url\(.*?\)|[^0]\S*\s*)|0(%|em|ex|px|in|cm|mm|pt|pc)(\s|$)/gi, function(_, skip, remove, whitespace) {
+		    	return skip || ('0' + whitespace);
+		    });
+		},
+		
+		rgbToHex: function(value) {
+		    return value.replace(/\brgb\((\d{1,3}),\s*(\d{1,3}),\s*(\d{1,3})\)/gi, function(_, r, g, b) {
+		    return '#' + ((1 << 24) + (r << 16) + (g << 8) + (b << 0)).toString(16).substr(-6).toUpperCase();
+		    });
+		},
+		
+		inheritedStyleNames: {
+		    "border-collapse": 1,
+		    "border-spacing": 1,
+		    "border-style": 1,
+		    "caption-side": 1,
+		    "color": 1,
+		    "cursor": 1,
+		    "direction": 1,
+		    "empty-cells": 1,
+		    "font": 1,
+		    "font-family": 1,
+		    "font-size-adjust": 1,
+		    "font-size": 1,
+		    "font-style": 1,
+		    "font-variant": 1,
+		    "font-weight": 1,
+		    "letter-spacing": 1,
+		    "line-height": 1,
+		    "list-style": 1,
+		    "list-style-image": 1,
+		    "list-style-position": 1,
+		    "list-style-type": 1,
+		    "opacity": 1,
+		    "quotes": 1,
+		    "text-align": 1,
+		    "text-decoration": 1,
+		    "text-indent": 1,
+		    "text-shadow": 1,
+		    "text-transform": 1,
+		    "white-space": 1,
+		    "word-spacing": 1,
+		    "word-wrap": 1
+		},
+	
+	    translateName: function(name, value)
+	    {
+	        // Don't show these proprietary Mozilla properties
+	        if ((value == "-moz-initial"
+	            && (name == "-moz-background-clip" || name == "-moz-background-origin"
+	                || name == "-moz-background-inline-policy"))
+	        || (value == "physical"
+	            && (name == "margin-left-ltr-source" || name == "margin-left-rtl-source"
+	                || name == "margin-right-ltr-source" || name == "margin-right-rtl-source"))
+	        || (value == "physical"
+	            && (name == "padding-left-ltr-source" || name == "padding-left-rtl-source"
+	                || name == "padding-right-ltr-source" || name == "padding-right-rtl-source")))
+	            return null;
+
+	        // Translate these back to the form the user probably expects
+	        if (name == "margin-left-value")
+	            return "margin-left";
+	        else if (name == "margin-right-value")
+	            return "margin-right";
+	        else if (name == "margin-top-value")
+	            return "margin-top";
+	        else if (name == "margin-bottom-value")
+	            return "margin-bottom";
+	        else if (name == "padding-left-value")
+	            return "padding-left";
+	        else if (name == "padding-right-value")
+	            return "padding-right";
+	        else if (name == "padding-top-value")
+	            return "padding-top";
+	        else if (name == "padding-bottom-value")
+	            return "padding-bottom";
+	        // XXXjoe What about border!
+	        else
+	            return name;
+	    }
 		
 	});
 	
