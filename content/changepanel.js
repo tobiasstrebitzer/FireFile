@@ -177,7 +177,7 @@ FBL.ns(function() { with(FBL) {
                 var check = {value: false};
                 var input = {value: Firebug.FireFile.sitesArray[siteindex].label};
                 var result = PromptService.prompt(null, Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), input, null, check);
-                
+
                 if(result && input.value != "") {
                     if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
                         Firebug.FireFile.sitesArray[siteindex].label = input.value;
