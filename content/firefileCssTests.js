@@ -29,7 +29,38 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		ftpTest: function() {
-			Firebug.FireFile.FtpTools.connect("strebitzer.at", "login-14.hoststar.at", "21", "web227", "d0mingoo", "/html/cherrybomb/css/", "style2.css");
+			
+			var serverconfig = {
+				name: "strebitzer.at",
+				rdir: "/html/",
+				user: "web227",
+				pass: "d0mingoo",
+				host: "strebitzer.at",
+				port: "21"
+			};
+			
+			// Get Stylesheet data and guess filename
+			var styleSheet = FirebugContext.global.document.styleSheets[0];
+			var fileName = Firebug.FireFile.filenameFromHref(styleSheet.href);
+			var fileHost = Firebug.FireFile.getHostFromHref(styleSheet.href);
+			var fileUrl = styleSheet.href.replace(fileName, "");
+			var fileUri = fileUrl.replace("http://" + fileHost + "/", ""); // todo: do this in one go
+			var fileContents = Firebug.FireFile.CssTransformer.generateCSSContents(styleSheet, false); // Get tidy contents
+			var filePath = serverconfig.rdir + fileUri;
+			
+			// Save local copy of file
+			var fileHandle = Firebug.FireFile.DataUtils.saveTemporaryFile(fileName, fileContents);
+			
+			Firebug.FireFile.DataUtils.saveFileFtp(serverconfig, filePath, fileName, fileHandle, 
+				// onError
+				function(error) {
+					Firebug.Console.log(error);
+				},
+				// onSuccess
+				function(success) {
+					Firebug.Console.log(success);
+				}
+			);
 		},
 		
 		parseTest: function() {

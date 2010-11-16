@@ -100,10 +100,13 @@ FBL.ns(function() { with(FBL) {
                     DIV({role : 'list', 'aria-label' : "firefile" },
                         FOR("site", "$sites",
                             H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow FireFileSiteHook", role : 'listitem', siteurl: "$site.url"},
-                                DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
+								DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
+	                                SPAN({class: "cssFireFilePrefix$site|getSiteType" },
+	                                    "$site|getSiteType"
+	                                ),
                                     "$site.label",
                                     SPAN({class: "cssFireFileHostLabel"},
-                                        A({href: "$site.url", target: "_blank"}, "$site.url|shortenUrl")
+                                        A({href: "$site.url", target: "_blank"}, "$site|getUrl")
                                     )
                                 ),
                                 DIV({class: "cssFireFileSiteIconContainer"},
@@ -156,6 +159,23 @@ FBL.ns(function() { with(FBL) {
                     return data;
                 }
             },
+			getSiteType: function(site) {
+				if(site.is_ftp) {
+					return "Ftp";
+				}else{
+					return "Script";
+				}
+			},
+			getUrl: function(site) {
+				if(site.is_ftp) {
+					// FTP Site
+					return site.ftp_user + "@" + site.ftp_host + ":" + site.ftp_port + " (" + site.url + ")";
+				}else{
+					// Script Site
+					return this.shortenUrl(site.url);
+				}
+				
+			},
             shortenUrl: function(data) {
                 if(data.length > 80) {
                     return data.substr(0, 80) + "...";
@@ -171,22 +191,107 @@ FBL.ns(function() { with(FBL) {
                 }
             },
             onEditClick: function(e) {
-                
+
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
-                var check = {value: false};
-                var input = {value: Firebug.FireFile.sitesArray[siteindex].label};
-                var result = PromptService.prompt(null, Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), input, null, check);
 
-                if(result && input.value != "") {
-                    if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
-                        Firebug.FireFile.sitesArray[siteindex].label = input.value;
+				// Update Label
+				var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), Firebug.FireFile.sitesArray[siteindex].label);
+                if(result !== false) {
+                    if(!result.match(/[^a-zA-Z0-9-_\s\.\/]+/) && result.length <= 40) {
+                        Firebug.FireFile.sitesArray[siteindex].label = result;
                         Firebug.FireFile.saveSitesArray();
                         FirebugContext.getPanel("firefile").select();
                     }else{
                         Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
+						return;
                     }
                 }
+
+				// Check if FTP
+				if(Firebug.FireFile.sitesArray[siteindex].is_ftp) {
+
+					// Update Match Url
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangeUrl"), Firebug.FireFile.__("EnterNewUrl"), Firebug.FireFile.sitesArray[siteindex].url);
+	                if(result !== false) {
+	                    if(!result.match(/[^a-zA-Z0-9:/-_\.]+/) && result.length <= 64) {
+	                        Firebug.FireFile.sitesArray[siteindex].url = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "UrlError", true);
+							return;
+	                    }
+	                }
+
+					// Update Host
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangeHost"), Firebug.FireFile.__("EnterNewHost"), Firebug.FireFile.sitesArray[siteindex].ftp_host);
+	                if(result !== false) {
+	                    if(!result.match(/[^a-zA-Z0-9-_\.]+/) && result.length <= 64) {
+	                        Firebug.FireFile.sitesArray[siteindex].ftp_host = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "HostError", true);
+							return;
+	                    }
+	                }
+	
+					// Update Port
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangePort"), Firebug.FireFile.__("EnterNewPort"), Firebug.FireFile.sitesArray[siteindex].ftp_port);
+	                if(result !== false) {
+	                    if(!result.match(/[^0-9]+/) && result.length <= 6) {
+	                        Firebug.FireFile.sitesArray[siteindex].ftp_port = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "PortError", true);
+							return;
+	                    }
+	                }
+	
+					// Update User
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangeUser"), Firebug.FireFile.__("EnterNewUser"), Firebug.FireFile.sitesArray[siteindex].ftp_user);
+	                if(result !== false) {
+	                    if(!result.match(/[^a-zA-Z0-9-_\.]+/) && result.length <= 40) {
+	                        Firebug.FireFile.sitesArray[siteindex].ftp_user = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "UserError", true);
+							return;
+	                    }
+	                }
+	
+					// Update Password
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangePass"), Firebug.FireFile.__("EnterNewPass"), Firebug.FireFile.sitesArray[siteindex].ftp_pass);
+	                if(result !== false) {
+	                    if(result.length <= 40) {
+	                        Firebug.FireFile.sitesArray[siteindex].ftp_pass = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "PassError", true);
+							return;
+	                    }
+	                }
+	
+					// Update Root Directory
+					var result = Firebug.FireFile.DataUtils.fetchInput(Firebug.FireFile.__("ChangeRootDir"), Firebug.FireFile.__("EnterNewRootDir"), Firebug.FireFile.sitesArray[siteindex].ftp_rdir);
+	                if(result !== false) {
+	                    if(result.length <= 40) {
+	                        Firebug.FireFile.sitesArray[siteindex].ftp_rdir = result;
+	                        Firebug.FireFile.saveSitesArray();
+	                        FirebugContext.getPanel("firefile").select();
+	                    }else{
+	                        Firebug.FireFile.updateNotify("fferror", 8, 1, "RootDirError", true);
+							return;
+	                    }
+	                }
+					
+				}
+
+				
                 
             },
             onAutoSaveClick: function(e) {

@@ -1,6 +1,7 @@
 
 FBL.ns(function() { with(FBL) {
 
+/*
 	Firebug.FireFile.FtpTools = extend(Firebug.Module, {
 
 		activeserver: null,
@@ -13,7 +14,7 @@ FBL.ns(function() { with(FBL) {
 		consoleService: Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService),
 		
 
-		connect: function(servername, host, port, user, pass, dir, file, cssFile) {
+		connect: function(servername, host, port, user, pass, dir, fileName, fileContents) {
 			
 			// Setup server
 			this.servers[servername] = {
@@ -22,7 +23,8 @@ FBL.ns(function() { with(FBL) {
 				user: user,
 				pass: pass,
 				dir: dir,
-				file: file,
+				fileName: fileName,
+				fileContents: fileContents,
 				transport: null,
 			    sIn: null,
 			    sOut: null,
@@ -44,7 +46,7 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		login: function() {
-			alert("todo: login");
+			// alert("todo: login");
 		},
 		
 		initStream: function() {
@@ -115,7 +117,7 @@ FBL.ns(function() { with(FBL) {
 			var action = this.servers[this.activeserver].state.substr(3);
 			
 			if(status != this.servers[this.activeserver].state.substr(0,3)) {
-				Firebug.Console.log("SKIP: " + msg);
+				Firebug.Console.log("SKIP: " + msg + "(" + this.servers[this.activeserver].state.substr(0,3) + ")");
 				return false;
 				// throw({error: "WrongResponseError", data: { msg: msg }});
 			}
@@ -147,29 +149,38 @@ FBL.ns(function() { with(FBL) {
 					if (this.servers[this.activeserver].data.finished) {
 						Firebug.Console.log(this.servers[this.activeserver].data.listData.toLowerCase());
 						// Check if file exists
-						if (this.servers[this.activeserver].data.listData.toLowerCase().indexOf(this.servers[this.activeserver].file.toLowerCase()) < 0) {
+						if (this.servers[this.activeserver].data.listData.toLowerCase().indexOf(this.servers[this.activeserver].fileName.toLowerCase()) < 0) {
 							// File does not exist!
-							throw({error: "WrongResponseError", data: { msg: msg }});
+							throw({error: "FileDoesNotExistHere", data: { msg: msg }});
 						}
-						
-						this.state = "200";
+						this.servers[this.activeserver].state = "200";
 						this.sendCommand("TYPE I");
 					} else {
 						this.servers[this.activeserver].data.onFinish = this;
 					}
 	                break;
 	            case "200": // Set Upload Type Binary
-					this.state = "227B";
+					this.servers[this.activeserver].state = "227B";
                     this.sendCommand("PASV");
 	                break;
 	            case "227B": // Set Passive Mode
-					this.state = "226B";
-					this.servers[this.activeserver].data = new Firebug.FireFile.FtpTools.FtpStream(this.servers[this.activeserver].host, this.getPortFromPasvResponse(msg), this.servers[this.activeserver].cssFile);
+					this.servers[this.activeserver].state = "226B";
+					this.servers[this.activeserver].data = new Firebug.FireFile.FtpTools.FtpStream(this.servers[this.activeserver].host, this.getPortFromPasvResponse(msg), this.servers[this.activeserver].fileContents);
 					this.dataStream.connectWrite();
-
-					this.sendCommand("STOR " + this.destinationFilename);
+					this.sendCommand("STOR " + this.servers[this.activeserver].fileName);
 	                break;
 			}
+		},
+		
+		onDataStreamFinish: function() {
+			
+			// Check if file exists
+			if (this.servers[this.activeserver].data.listData.toLowerCase().indexOf(this.servers[this.activeserver].fileName.toLowerCase()) < 0) {
+				// File does not exist!
+				throw({error: "FileDoesNotExistHere", data: { msg: msg }});
+			}
+			this.servers[this.activeserver].state = "200";
+			this.sendCommand("TYPE I");
 		},
 		
 		getPortFromPasvResponse: function(pasvResponse) {
@@ -189,10 +200,35 @@ FBL.ns(function() { with(FBL) {
 
 	Firebug.registerModule(Firebug.FireFile.FtpTools);
 
-	Firebug.FireFile.FtpTools.FtpStream = function(host, port, sourceFile) {
+	Firebug.FireFile.FtpTools.FtpStream = function(host, port, fileContents) {
 	    this.host = host;
 	    this.port = port;
-	    this.sourceFile = sourceFile;
+	
+		// Create Temporary File
+		if(fileContents != undefined) {
+			var sourceFile = Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("TmpD", Components.interfaces.nsIFile);
+			sourceFile.append(this.servers[this.activeserver].fileName);
+			sourceFile.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0666);
+			
+			// file is nsIFile, data is a string  
+			var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);  
+			// use 0x02 | 0x10 to open file for appending.
+			foStream.init(file, 0x02 | 0x08 | 0x20, 0666, 0);
+			// write, create, truncate  
+			// In a c file operation, we have no need to set file mode with or operation,  
+			// directly using "r" or "w" usually.  
+  
+			// if you are sure there will never ever be any non-ascii text in data you can   
+			// also call foStream.writeData directly  
+			var converter = Components.classes["@mozilla.org/intl/converter-output-stream;1"].  
+			                          createInstance(Components.interfaces.nsIConverterOutputStream);  
+			converter.init(foStream, "UTF-8", 0, 0);  
+			converter.writeString(data);  
+			converter.close(); // this closes foStream
+			alert(sourceFile.path);
+			
+		    this.sourceFile = sourceFile;	
+		}
 
 	    this.transportService = Cc["@mozilla.org/network/socket-transport-service;1"].getService(Ci.nsISocketTransportService);
 	    this.eventTarget = Cc["@mozilla.org/thread-manager;1"].getService().currentThread;
@@ -334,5 +370,7 @@ FBL.ns(function() { with(FBL) {
 	        this.dataOutstream.writeBytes(dataBuffer, dataBuffer.length);
 	    }
 	}
+
+*/
 
 }});

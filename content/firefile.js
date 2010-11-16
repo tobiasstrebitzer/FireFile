@@ -217,7 +217,8 @@ FBL.ns(function() { with(FBL) {
 					
                     var href = Firebug.FireFile.modifiedStylesheets[index].href;
                     var filetype = "stylesheet";
-                	var registered_site = Firebug.FireFile.getHrefInAllowedSites(href);                    
+                	var registered_site = Firebug.FireFile.getHrefInAllowedSites(href);      
+              
                     Firebug.FireFile.sendFile(index, contents, href, registered_site, filetype, function(e) {
                         // ON SUCCESS
                         Firebug.FireFile.styleSheetStatus[href] = "done";
@@ -252,9 +253,6 @@ FBL.ns(function() { with(FBL) {
                 return false;
             }  
 		},
-		initContext: function(context, persistedState) {
-
-	    },
 		showContext: function(browser, context) {
 			
 			if(!context) { return; }
@@ -396,7 +394,13 @@ FBL.ns(function() { with(FBL) {
                             url: row[0],
                             hash: row[1],
                             label: row[2],
-                            autosave: Boolean(parseInt(row[3]))
+                            autosave: Boolean(parseInt(row[3])),
+							is_ftp: Boolean(parseInt(row[4])),
+							ftp_host: row[5],
+							ftp_port: row[6],
+							ftp_user: row[7],
+							ftp_pass: row[8],
+							ftp_rdir: row[9]
                         });
                     }
                 }
@@ -420,7 +424,24 @@ FBL.ns(function() { with(FBL) {
                     }else{
                         var autosave = "0";
                     }
-                    sitesRows.push(this.sitesArray[i].url+"|"+this.sitesArray[i].hash+"|"+this.sitesArray[i].label+"|"+autosave);
+                    if(this.sitesArray[i].is_ftp) {
+                        var is_ftp = "1";
+                    }else{
+                        var is_ftp = "0";
+                    }
+					var siteArray = [
+						this.sitesArray[i].url,
+						this.sitesArray[i].hash,
+						this.sitesArray[i].label,
+						autosave,
+						is_ftp,
+						this.sitesArray[i].ftp_host,
+						this.sitesArray[i].ftp_port,
+						this.sitesArray[i].ftp_user,
+						this.sitesArray[i].ftp_pass,
+						this.sitesArray[i].ftp_rdir
+					];
+					sitesRows.push(siteArray.join("|"));
                 }
             }
             Firebug.setPref(FireFilePrefDomain, "sites", sitesRows.join(";"));
