@@ -253,9 +253,27 @@ FBL.ns(function() { with(FBL) {
             }  
 		},
 		initContext: function(context, persistedState) {
-
 	    },
 		showContext: function(browser, context) {
+
+			// DB tests
+			try{
+				var db = new Firebug.FireFile.FireDb("firefile");
+				
+				var query = db.select("name").from("models").getQuery();
+				
+				Firebug.Console.log(query);
+				
+				// Test
+				// db.getHandle().executeSimpleSQL("INSERT INTO models (name) VALUES ('test');");
+				
+			}catch(ex) {
+				Firebug.Console.log(ex);
+			}
+
+			Firebug.Console.log(db);
+			
+			return false;
 			
 			if(!context) { return; }
 			
