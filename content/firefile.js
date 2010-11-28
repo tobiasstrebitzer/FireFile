@@ -32,7 +32,7 @@
  * the terms of any one of the MPL, the GPL or the LGPL.
  *
  * ***** END LICENSE BLOCK ***** */
-
+try{
 FBL.ns(function() { with(FBL) {
 
     // Register FireFile string bundles.
@@ -40,6 +40,8 @@ FBL.ns(function() { with(FBL) {
     const stringBundleService = CCSV("@mozilla.org/intl/stringbundle;1", "nsIStringBundleService");
     const FireFilePrefDomain = "extensions.firefile";
     const PromptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].getService(Components.interfaces.nsIPromptService);
+
+	var db = null;
 
     var CSSDomplateBase = {
         isEditable: function(rule)
@@ -252,28 +254,10 @@ FBL.ns(function() { with(FBL) {
                 return false;
             }  
 		},
-		initContext: function(context, persistedState) {
-	    },
 		showContext: function(browser, context) {
-
-			// DB tests
-			try{
-				var db = new Firebug.FireFile.FireDb("firefile");
-				
-				var query = db.select("name").from("models").getQuery();
-				
-				Firebug.Console.log(query);
-				
-				// Test
-				// db.getHandle().executeSimpleSQL("INSERT INTO models (name) VALUES ('test');");
-				
-			}catch(ex) {
-				Firebug.Console.log(ex);
-			}
-
-			Firebug.Console.log(db);
 			
-			return false;
+			// Test db (force init)
+			this.initDb();
 			
 			if(!context) { return; }
 			
@@ -293,16 +277,19 @@ FBL.ns(function() { with(FBL) {
                     if (this.styleSheetIndexByHref(site_script) === false) {                            
                         var result = PromptService.confirm(null, Firebug.FireFile.__("AddToFireFile"), Firebug.FireFile.__("DoYouWantToAddTheSite", this.getHostFromHref(site_script)));
                         if(result === true) {
-                            Firebug.FireFile.getSitesArray();
-                            Firebug.FireFile.sitesArray.push({
+	
+							// Add site to registered sites
+							Firebug.FireFile.db.insert({
                                 url: site_script,
                                 hash: keyholder.innerHTML,
-                                label: this.getHostFromHref(site_script)
-                            });
-                            Firebug.FireFile.saveSitesArray();
+                                label: this.getHostFromHref(site_script),
+								isftp: 0
+							});
+
+							// Update status
                             Firebug.FireFile.setStatus("closed");
                             
-                            // OPEN SITES PANEL
+                            // Open sites panel
                             top.FirebugChrome.selectPanel("html");
                             top.FirebugChrome.selectSidePanel("firefile");
                             FirebugContext.getPanel("firefile").select();
@@ -318,10 +305,12 @@ FBL.ns(function() { with(FBL) {
 					Firebug.chrome.switchToPanel(context, "html");
 				}
 				FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
-	            this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
 			}catch(ex){
-				// Firebug.Console.log(ex);
+				alert(ex);
 			}
+
+			// Load CSS
+			this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
 			
 		},
 		enableFireFile: function() {
@@ -337,7 +326,52 @@ FBL.ns(function() { with(FBL) {
                 this.initialize();
             }
         },
+		initDb: function() {
+			
+			this.db = new Firebug.FireFile.FireDb("firefile");
+
+			if(!this.db.exists("sites")) {
+				
+				// Initialize database
+				this.setupDatabase();
+				
+				// Install sample data (TODO: Disable)
+				this.installSampleData();
+			}
+			
+		},
+		setupDatabase: function() {
+			this.db.create("sites", {
+				id: {type: "INTEGER", autoincrement: true, primary_key: true},
+				label: {type: "TEXT"},
+				hash: {type: "TEXT"},
+				url: {type: "TEXT"},
+				host: {type: "TEXT"},
+				autosave: {type: "INTEGER"},
+				ftp_host: {type: "TEXT"},
+				ftp_user: {type: "TEXT"},
+				ftp_pass: {type: "TEXT"},
+				ftp_port: {type: "INTEGER"},
+				ftp_rdir: {type: "TEXT"},
+				is_ftp: {type: "INTEGER"}
+			}, true);
+		},
+		installSampleData: function() {
+			
+			// Test Site 1
+			this.db.insert({label: "MacTobi", url: "http://mactobi.com/firefile/firefile.php", host: "mactobi.com", hash: "c566df8ba7d4a07489a32396b7b63907", autosave: 0, is_ftp: 0});
+			
+			// Test Site 2
+			this.db.insert({label: "FireFile", url: "http://www.strebitzer.at/firefile", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "web227", ftp_pass: "d0mingoo", ftp_port: 21, ftp_rdir: "html/firefile", is_ftp: 1});
+			
+			// Test Site 3
+			this.db.insert({label: "Cherrybomb", url: "http://www.strebitzer.at/cherrybomb", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "web227", ftp_pass: "d0mingoo", ftp_port: 21, ftp_rdir: "html/cherrybomb", is_ftp: 1});
+
+		},
         initialize: function() {
+	
+			// Initialize database
+			//this.initDb();
 
 			// Setup CSS View
 			/*Firebug.Console.log(FirebugContext.getPanel("css"));
@@ -347,7 +381,7 @@ FBL.ns(function() { with(FBL) {
 			// Setup System Hooks
             this.hookIntoHtmlContext();
             this.hookIntoCSSPanel();
-            this.modifiedStylesheets = new Array();
+            this.modifiedStylesheets = {};
             this.styleSheetStatus = new Array();
             
             // SETUP PREFERENCES
@@ -397,33 +431,9 @@ FBL.ns(function() { with(FBL) {
 				return false;
 			}
 		},
-        sitesArray: null,
+		changesList: {},
         getSitesArray: function() {
-            // STORED ?
-            if(this.sitesArray) { return this.sitesArray; }
-            
-            try{
-                // BUILD FROM PREFERENCES
-                this.sitesArray = [];
-                var sitesString = Firebug.getPref(FireFilePrefDomain, "sites");
-                var sitesRows = sitesString.split(";");
-                for(var i in sitesRows) {
-                    var row = sitesRows[i].split("|");
-                    if(row[0] != undefined && row[0] != "undefined" && row[1] != undefined && row[1] != "undefined") {
-                        this.sitesArray.push({
-                            url: row[0],
-                            hash: row[1],
-                            label: row[2],
-                            autosave: Boolean(parseInt(row[3]))
-                        });
-                    }
-                }
-            }catch(ex){
-                // RETURN EMPTY ON ERROR
-                this.sitesArray = [];
-            }
-            this.saveSitesArray();
-            return this.sitesArray;
+			return Firebug.FireFile.db.select("*").from("sites").getResults();
         },
         saveSitesArray: function() {
             // STORED ?
@@ -660,18 +670,20 @@ FBL.ns(function() { with(FBL) {
                             // CHECK IF STYLE BELONGS TO STYLESHEET OR HTML DOCUMENT
                             if (styleSheet.href != null) {
                                 if (self.styleSheetExists(styleSheet.href) === false) {
-                                    
-                                    // ADD TO MODIFIED LIST
-                                    self.modifiedStylesheets.push(styleSheet);
-                                    
-                                    // AUTOSAVE IF ALLOWED
                                     var existing_site = Firebug.FireFile.getHrefInAllowedSites(styleSheet.href);
-                                    if(existing_site && existing_site.autosave == true) {
-                                        Firebug.FireFile.styleSheetStatus[styleSheet.href] = "autosave";
-                                        
-                                        // START NEW TIMEOUT
-                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
-                                    }
+									if(existing_site) {
+										// ADD TO MODIFIED LIST
+										self.modifiedStylesheets.push(styleSheet);
+										
+										// AUTOSAVE IF ALLOWED
+	                                    if(existing_site.autosave == true) {
+	                                        Firebug.FireFile.styleSheetStatus[styleSheet.href] = "autosave";
+
+	                                        // START NEW TIMEOUT
+	                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+	                                    }
+										
+									}
                                 }
                             }
                         }
@@ -1004,10 +1016,31 @@ FBL.ns(function() { with(FBL) {
 			Firebug.FireFile.updateNotify("fferror", 8, -1000, msg);
 			Firebug.FireFile.updateNotify("ffnotify", 4, 1, msg);
 		},
+		getSiteByHref: function(href) {
+			
+			var host = this.getHostFromHref(href);
+			
+		    // CHECK FOR MATCHING SITE HOST
+            if(!host) { return false; }
+
+			// Query sites table
+			var site = Firebug.FireFile.db.select("*").from("sites").where("url LIKE 'http://" + host + "%'").fetch();
+			
+			Firebug.Console.log(site);
+			alert("ok");
+			
+            var sites = this.getSitesArray();
+            for (i in sites) {
+                if(sites[i].url != "") {
+                    if (css_host == sites[i].url.match(re)[1].toString()) {
+                        return sites[i];
+                    }   
+                }
+            }
+            return false;
+
+		},
 		getHrefInAllowedSites: function(href) {
-		    
-		    // ALWAYS ALLOW 'UPLOADING' OF LOCAL FILES
-            if(this.isFileLocal(href)) { return true; }
 		    
 		    // CHECK FOR MATCHING SITE HOST
             var re = new RegExp('^((?:https|http|file)?\://?/[^/]+)', 'im');
@@ -1113,3 +1146,6 @@ FBL.ns(function() { with(FBL) {
     Firebug.registerModule(Firebug.FireFile);
 
 }});
+}catch(er) {
+	alert(er);
+}
