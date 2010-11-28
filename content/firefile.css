@@ -146,6 +146,24 @@ div.cssChangesContainer span.error {
     background: url(chrome://FireFile/skin/firefile_save_error.png) !important;
 }
 
+div.cssFireFileSitesPanel span.fireFileAddSiteIcon {
+    background: url(chrome://FireFile/skin/firefile_add.png) no-repeat top left;
+	color: #AAAAAA;
+    float: left;
+    cursor: pointer;
+    display: inline;
+    height: 16px;
+	width: 100%;
+    margin: 0px 4px 0px 0px !important;
+	line-height: 16px;
+	padding: 0px 0px 0px 20px;
+}
+
+div.cssFireFileSitesPanel span.fireFileAddSiteIcon:hover {
+	color: #8F8F8F;
+    background: url(chrome://FireFile/skin/firefile_add_hover.png) no-repeat top left;
+}
+
 /* HTML CSS PANEL HOOK'n'HACK */
 a.objectLink-sourceLink {
     position: relative;

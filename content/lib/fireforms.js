@@ -1,6 +1,6 @@
 FBL.ns(function() { with(FBL) {
 
-	Firebug.FireFile.FtpClient = function(host, port) {
+	Firebug.FireFile.FireForms = function(host, port) {
 	  this.commandlist = [];
 	  this.responses = [];
 	  this.flag = true;

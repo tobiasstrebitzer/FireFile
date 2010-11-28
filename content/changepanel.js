@@ -99,7 +99,7 @@ FBL.ns(function() { with(FBL) {
                 DIV({"class": "cssFireFileSitesPanel",  role : 'presentation'},
                     DIV({role : 'list', 'aria-label' : "firefile" },
                         FOR("site", "$sites",
-                            H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow FireFileSiteHook", role : 'listitem', siteurl: "$site.url"},
+                            H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow FireFileSiteHook", role : 'listitem', siteid: "$site.id", siteurl: "$site.url"},
                                 DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
                                     "$site.label",
                                     SPAN({class: "cssFireFileHostLabel"},
@@ -113,9 +113,14 @@ FBL.ns(function() { with(FBL) {
                                 )
                             ),
                             DIV({role : 'group'},
-                                FOR("change", "$site.changes|orEmpty",
+                                FOR("change", "$site|getChanges",
                                     TAG(FireFileChangesTags.styleSheetTag, {rule: "$change"})
                                 )
+                            )
+                        ),
+                        H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow", role : 'listitem'},
+                            DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
+	                            SPAN({class: "cssFireFileSiteIcon fireFileAddSiteIcon", title: $STR("AddSiteIconTooltip", "strings_firefile"), onclick: "$onAddSiteClick"}, "Add new Site (FTP)")
                             )
                         )
                     )
@@ -170,6 +175,17 @@ FBL.ns(function() { with(FBL) {
                     return "Off";
                 }
             },
+			getChanges: function(site) {
+				
+				for(var i=0;i<Firebug.FireFile.modifiedStylesheets)
+				
+				var changes = ;
+				if(changes) {
+					return changes;
+				}else{
+					return [];
+				}
+			},
             onEditClick: function(e) {
                 
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
@@ -189,11 +205,29 @@ FBL.ns(function() { with(FBL) {
                 }
                 
             },
-            onAutoSaveClick: function(e) {
+            onAddSiteClick: function(e) {
+				alert("add");
+                /*
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
-                Firebug.FireFile.sitesArray[siteindex].autosave = !Firebug.FireFile.sitesArray[siteindex].autosave;
-                Firebug.FireFile.saveSitesArray();
+                var check = {value: false};
+                var input = {value: Firebug.FireFile.sitesArray[siteindex].label};
+                var result = PromptService.prompt(null, Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), input, null, check);
+
+                if(result && input.value != "") {
+                    if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
+                        Firebug.FireFile.sitesArray[siteindex].label = input.value;
+                        Firebug.FireFile.saveSitesArray();
+                        FirebugContext.getPanel("firefile").select();
+                    }else{
+                        Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
+                    }
+                }*/
+                
+            },
+            onAutoSaveClick: function(e) {
+				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
+				Firebug.FireFile.db.toggle(id, "autosave", "sites");
                 FirebugContext.getPanel("firefile").select();
             },
             onDeleteClick: function(e) {
@@ -201,6 +235,7 @@ FBL.ns(function() { with(FBL) {
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
                 var result = PromptService.confirm(null, Firebug.FireFile.__("DeleteSite"), Firebug.FireFile.__("ReallyDeleteSite", Firebug.FireFile.sitesArray[siteindex].label));
                 if(result === true) {
+	
                     // DELETE SITE
                     Firebug.FireFile.sitesArray.splice(siteindex, 1);
                     Firebug.FireFile.saveSitesArray();
@@ -219,27 +254,28 @@ FBL.ns(function() { with(FBL) {
         
         select: function() {
             
-            // LOAD FULL SITES ARRAY AGAIN
+			try {
+            
+			// LOAD FULL SITES ARRAY AGAIN
             var sites = Firebug.FireFile.getSitesArray();
             var changes = Firebug.FireFile.modifiedStylesheets;
             
+
             if(sites.length > 0) {
                 
                 // PREPARE CHANGES IN SITES ARRAY
                 for(var i=0;i<sites.length;i++){
-                    sites[i].changes = [];
-                    sites[i].changeCount = 0;
+					Firebug.FireFile.changesList[sites[i].id] = {};
                 }
                 
                 // BUILD SITES / CHANGES ARRAY
                 for(var i=0;i<changes.length;i++) {
+					alert(i);
                     var related_site = Firebug.FireFile.getHrefInAllowedSites(changes[i].href);
+					alert(related_site);
                     if(related_site) {
-                        var host = Firebug.FireFile.getHostFromHref(related_site.url);
-
-                        // ADD CHANGES TO STYLE
-                        related_site.changes.push(changes[i]);
-                        related_site.changeCount++;
+                        // Add Changes to list
+                       	Firebug.FireFile.changesList[sites[i].id][changes[i].href] = changes[i];
                     }
                 }
                 var result = this.template.changesList.replace({sites: sites}, this.panelNode);
@@ -258,6 +294,11 @@ FBL.ns(function() { with(FBL) {
                 };
                 var result = this.template.helpView.replace(translation, this.panelNode);
             }
+
+			}catch(err) {
+				alert(err);
+				Firebug.Console.log(err);
+			}
         },
 
         name: "firefile",
@@ -313,6 +354,7 @@ FBL.ns(function() { with(FBL) {
 	try{
     	Firebug.registerPanel(FireFilePanel);
 	}catch(err){
+		alert("err");
 		Firebug.Console.log(err);
 	} 
     
