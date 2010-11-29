@@ -362,10 +362,10 @@ FBL.ns(function() { with(FBL) {
 			this.db.insert({label: "MacTobi", url: "http://mactobi.com/firefile/firefile.php", host: "mactobi.com", hash: "c566df8ba7d4a07489a32396b7b63907", autosave: 0, is_ftp: 0});
 			
 			// Test Site 2
-			this.db.insert({label: "FireFile", url: "http://www.strebitzer.at/firefile", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "web227", ftp_pass: "d0mingoo", ftp_port: 21, ftp_rdir: "html/firefile", is_ftp: 1});
+			this.db.insert({label: "FireFile", url: "http://www.strebitzer.at/firefile", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/firefile", is_ftp: 1});
 			
 			// Test Site 3
-			this.db.insert({label: "Cherrybomb", url: "http://www.strebitzer.at/cherrybomb", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "web227", ftp_pass: "d0mingoo", ftp_port: 21, ftp_rdir: "html/cherrybomb", is_ftp: 1});
+			this.db.insert({label: "Cherrybomb", url: "http://www.strebitzer.at/cherrybomb", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/cherrybomb", is_ftp: 1});
 
 		},
         initialize: function() {
