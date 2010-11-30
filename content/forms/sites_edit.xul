@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE window SYSTEM "chrome://FireFile/locale/forms.dtd">
+<?xml-stylesheet href="chrome://FireFile/content/forms/forms.css" type="text/css"?>
+<dialog id="donothing" title="&firefile.forms.SiteTitle;"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	buttons="accept,cancel"
+	buttonlabelcancel="&firefile.forms.Cancel;"
+	buttonlabelaccept="&firefile.forms.Save;"
+	ondialogaccept="return onDialogAccept();"
+	ondialogcancel="return onDialogCancel();"
+	onload="onLoad();">
+  	<script type="application/javascript" src="chrome://FireFile/content/lib/fireformsdialog.js"/>
+	<dialogheader title="Options" description="Seite bearbeiten"/>
+	<groupbox id="group_general"><caption label="General Settings" />
+		<label value="Beschreibung" />
+		<textbox id="field_label" />
+		<label value="Host" />
+		<textbox id="field_host" />
+	</groupbox>
+	<groupbox id="group_ftp"><caption label="FTP Settings" />
+		<label value="Host" />
+		<textbox id="field_ftp_host" />
+		<label value="Benutzername" />
+		<textbox id="field_ftp_user" />
+		<label value="Passwort" />
+		<textbox id="field_ftp_pass" />
+		<label value="Port" />
+		<textbox id="field_ftp_port" />
+	</groupbox>
+</dialog>

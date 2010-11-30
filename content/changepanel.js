@@ -176,18 +176,41 @@ FBL.ns(function() { with(FBL) {
                 }
             },
 			getChanges: function(site) {
-				
-				for(var i=0;i<Firebug.FireFile.modifiedStylesheets)
-				
-				var changes = ;
-				if(changes) {
-					return changes;
-				}else{
-					return [];
-				}
+												
+				return Firebug.FireFile.getStylesheetsBySite(site);
 			},
             onEditClick: function(e) {
-                
+	
+				// FireForms Edit function
+				// Get current site
+				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
+				var site = Firebug.FireFile.db.grab(id, "sites");
+
+				// Open Edit dialog
+				var editForm = new Firebug.FireFile.FireForms("sites", {
+					validation: {
+						host: {
+							regexp: '(ftp|http|https):\/\/[a-zA-Z0-9.-_+/?&;]+',
+							error: 'Please enter a valid host name (incl. http)'
+						},
+						label: {
+							regexp: '^[a-zA-Z0-9-_\s]+$',
+							error: 'Please enter a valid site label'
+						}
+					}
+				});
+				var updated_site = editForm.editDialog(site);
+
+				// Save if valid
+				if(updated_site) {
+					Firebug.FireFile.db.update(updated_site, "sites");
+				}
+				
+				// Refresh List
+			    FirebugContext.getPanel("firefile").select();
+	
+	
+                /*
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
                 var check = {value: false};
@@ -203,10 +226,22 @@ FBL.ns(function() { with(FBL) {
                         Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
                     }
                 }
+*/
                 
             },
             onAddSiteClick: function(e) {
-				alert("add");
+	
+				// Get current site
+				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
+				var site = Firebug.FireFile.db.grab(id, "sites");
+
+				// Open Edit dialog
+				var editForm = new Firebug.FireFile.FireForms("sites");
+				editForm.editDialog();
+
+				// Refresh List
+                FirebugContext.getPanel("firefile").select();
+
                 /*
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
@@ -262,22 +297,7 @@ FBL.ns(function() { with(FBL) {
             
 
             if(sites.length > 0) {
-                
-                // PREPARE CHANGES IN SITES ARRAY
-                for(var i=0;i<sites.length;i++){
-					Firebug.FireFile.changesList[sites[i].id] = {};
-                }
-                
-                // BUILD SITES / CHANGES ARRAY
-                for(var i=0;i<changes.length;i++) {
-					alert(i);
-                    var related_site = Firebug.FireFile.getHrefInAllowedSites(changes[i].href);
-					alert(related_site);
-                    if(related_site) {
-                        // Add Changes to list
-                       	Firebug.FireFile.changesList[sites[i].id][changes[i].href] = changes[i];
-                    }
-                }
+				// Output changes list
                 var result = this.template.changesList.replace({sites: sites}, this.panelNode);
             }else{
                 var translation = {

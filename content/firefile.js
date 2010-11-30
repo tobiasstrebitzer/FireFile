@@ -362,10 +362,10 @@ FBL.ns(function() { with(FBL) {
 			this.db.insert({label: "MacTobi", url: "http://mactobi.com/firefile/firefile.php", host: "mactobi.com", hash: "c566df8ba7d4a07489a32396b7b63907", autosave: 0, is_ftp: 0});
 			
 			// Test Site 2
-			this.db.insert({label: "FireFile", url: "http://www.strebitzer.at/firefile", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/firefile", is_ftp: 1});
+			this.db.insert({label: "FireFile", url: "http://www.strebitzer.at/firefile", host: "www.strebitzer.at/firefile", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/firefile", is_ftp: 1});
 			
 			// Test Site 3
-			this.db.insert({label: "Cherrybomb", url: "http://www.strebitzer.at/cherrybomb", host: "", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/cherrybomb", is_ftp: 1});
+			this.db.insert({label: "Cherrybomb", url: "http://www.strebitzer.at/cherrybomb", host: "www.strebitzer.at/cherrybomb", hash: "", autosave: 0, ftp_host: "login-14.hoststar.at", ftp_user: "", ftp_pass: "", ftp_port: 21, ftp_rdir: "html/cherrybomb", is_ftp: 1});
 
 		},
         initialize: function() {
@@ -381,7 +381,7 @@ FBL.ns(function() { with(FBL) {
 			// Setup System Hooks
             this.hookIntoHtmlContext();
             this.hookIntoCSSPanel();
-            this.modifiedStylesheets = {};
+            this.modifiedStylesheets = new Array();
             this.styleSheetStatus = new Array();
             
             // SETUP PREFERENCES
@@ -1015,6 +1015,29 @@ FBL.ns(function() { with(FBL) {
 			Firebug.FireFile.setStatus("closed");
 			Firebug.FireFile.updateNotify("fferror", 8, -1000, msg);
 			Firebug.FireFile.updateNotify("ffnotify", 4, 1, msg);
+		},
+		getStylesheetsBySite: function(site) {
+			var stylesheets = [];
+			
+			// Generate needle
+			var needle = this.formatUrl(site.host);
+			
+			for (var i=0; i < this.modifiedStylesheets.length; i++) {
+				var search = this.formatUrl(this.modifiedStylesheets[i].href);
+				if(search.substr(0, needle.length) == needle) {
+					stylesheets.push(this.modifiedStylesheets[i]);
+				}
+			};
+			return stylesheets;
+		},
+		formatUrl: function(url) {
+			if(url.substr(0,7) != "http://") {
+				url = "http://" + url;
+			}
+			return url;
+		},
+		getSiteByStylesheet: function(stylesheet) {
+			return this.getSiteByHref(stylesheet.href);
 		},
 		getSiteByHref: function(href) {
 			

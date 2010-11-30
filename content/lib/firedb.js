@@ -26,16 +26,21 @@ FBL.ns(function() { with(FBL) {
 			}
 			
 			// Load SQLite file
-			var dbFile = Components.classes["@mozilla.org/file/directory_service;1"]  
-				.getService(Ci.nsIProperties)  
-				.get("ProfD", Ci.nsIFile);  
+			var dbFile = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties).get("ProfD", Ci.nsIFile);
 			dbFile.append(dbname + ".sqlite");
-
+			
 			// Check if file exists
 			var fileExisted = dbFile.exists();
 			var dbhandle = Cc["@mozilla.org/storage/service;1"].getService(Ci.mozIStorageService).openDatabase(dbFile);
-			if (!fileExisted) {
-				dbhandle.executeSimpleSQL("CREATE TABLE models (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
+			if (!fileExisted) {	
+				try{
+					dbhandle.createTable("models", "id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT");
+				}catch(error) {
+					alert(error);
+				}
+				
+				alert("ok");
+				// dbhandle.executeSimpleSQL("CREATE TABLE models (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
 			}
 
 			return dbhandle;
