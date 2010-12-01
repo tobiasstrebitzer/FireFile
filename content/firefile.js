@@ -294,9 +294,6 @@ FBL.ns(function() { with(FBL) {
                     }
                 }
 			}
-
-			// Load CSS
-			this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
 			
 			return true;
 			
