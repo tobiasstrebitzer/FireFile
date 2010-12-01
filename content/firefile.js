@@ -54,77 +54,76 @@ FBL.ns(function() { with(FBL) {
 			if(!Firebug.FireFile.prefs.display_comments) { 
 				return [];
 			}
-			try{
+
 			var result = Firebug.FireFile.CssTransformer.getCommentForRule(object.rule);
 			if(result !== false) {
 				return result.split("\n");
 			}
-			}catch(ex){
-				Firebug.Console.log(ex);
-			}
+			Firebug.Console.log(object);
             return [];
         }
     };
 
     var CSSPropTag = domplate(CSSDomplateBase, {
-        tag: DIV({class: "cssProp focusRow", $disabledStyle: "$prop.disabled",
+        tag: DIV({"class": "cssProp focusRow", $disabledStyle: "$prop.disabled",
               $editGroup: "$rule|isEditable",
               $cssOverridden: "$prop.overridden", role : "option"},
-            SPAN({class: "cssPropName", $editable: "$rule|isEditable"}, "$prop.name"),
-            SPAN({class: "cssColon"}, ":"),
-            SPAN({class: "cssPropValue", $editable: "$rule|isEditable"}, "$prop.value$prop.important"),
-            SPAN({class: "cssSemi"}, ";")
+			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;"), // Use spaces for indent so, copy to clipboard is nice.
+            SPAN({"class": "cssPropName", $editable: "$rule|isEditable"}, "$prop.name"),
+            SPAN({"class": "cssColon"}, ":"),
+            SPAN({"class": "cssPropValue", $editable: "$rule|isEditable"}, "$prop.value$prop.important"),
+            SPAN({"class": "cssSemi"}, ";")
         )
     });
 
     var CSSRuleTag = TAG("$rule.tag", {rule: "$rule"});
 
     var CSSImportRuleTag = domplate({
-        tag: DIV({class: "cssRule insertInto focusRow importRule", _repObject: "$rule.rule"},
+        tag: DIV({"class": "cssRule insertInto focusRow importRule", _repObject: "$rule.rule"},
             "@import &quot;",
-            A({class: "objectLink", _repObject: "$rule.rule.styleSheet"}, "$rule.rule.href"),
+            A({"class": "objectLink", _repObject: "$rule.rule.styleSheet"}, "$rule.rule.href"),
             "&quot;;"
         )
     });
 
     var CSSStyleRuleTag = domplate(CSSDomplateBase, {
-        tag: DIV({class: "cssRule insertInto",
+        tag: DIV({"class": "cssRule insertInto",
                 $cssEditableRule: "$rule|isEditable",
                 $editGroup: "$rule|isSelectorEditable",
                 _repObject: "$rule.rule",
                 "ruleId": "$rule.id", role : 'presentation'},
-			DIV({class: "ruleComment", title: "Comment"}, 
+			DIV({"class": "ruleComment", title: "Comment"}, 
 	            FOR("comment", "$rule|getComments",
 	            	DIV({"class": "ruleCommentLine"}, "$comment")
 	            )
 		  	),
-            DIV({class: "cssHead focusRow", role : 'listitem'},
-                SPAN({class: "cssSelector", $editable: "$rule|isSelectorEditable"}, "$rule.selector"), " {"
+            DIV({"class": "cssHead focusRow", role : 'listitem'},
+                SPAN({"class": "cssSelector", $editable: "$rule|isSelectorEditable"}, "$rule.selector"), " {"
             ),
             DIV({role : 'group'},
-                DIV({class : "cssPropertyListBox", role : 'listbox'},
+                DIV({"class" : "cssPropertyListBox", _rule: "$rule", role : 'listbox'},
                     FOR("prop", "$rule.props",
                         TAG(CSSPropTag.tag, {rule: "$rule", prop: "$prop"})
                     )
                 )
             ),
-            DIV({class: "editable insertBefore", role:"presentation"}, "}")
+            DIV({"class": "editable insertBefore", role:"presentation"}, "}")
         )
     });
     
     var FireFileStyleDomPlate = domplate({
         cascadedTag:
-            DIV({"class": "a11yCSSView",  role : 'presentation'},
-                DIV({role : 'list', 'aria-label' : $STR('aria.labels.style rules') },
+            DIV({"class": "a11yCSSView",  role: 'presentation'},
+                DIV({role: 'list', 'aria-label' : $STR('aria.labels.style rules') },
                     FOR("rule", "$rules",
                         TAG("$ruleTag", {rule: "$rule"})
                     )
                 ),
-                DIV({role : "list", 'aria-label' :$STR('aria.labels.inherited style rules')},
+                DIV({role: "list", 'aria-label' :$STR('aria.labels.inherited style rules')},
                     FOR("section", "$inherited",
 
-                        H1({class: "cssInheritHeader groupHeader focusRow", role : 'listitem' },
-                            SPAN({class: "cssInheritLabel"}, "$inheritLabel"),
+                        H1({"class": "cssInheritHeader groupHeader focusRow", role: 'listitem' },
+                            SPAN({"class": "cssInheritLabel"}, "$inheritLabel"),
                             TAG(FirebugReps.Element.shortTag, {object: "$section.element"})
                         ),
                         DIV({role : 'group'},
@@ -137,11 +136,11 @@ FBL.ns(function() { with(FBL) {
             ),
 
         ruleTag:
-          DIV({class: "cssElementRuleContainer"},
+          DIV({"class": "cssElementRuleContainer"},
               TAG(CSSStyleRuleTag.tag, {rule: "$rule"}),
-              DIV({class: "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
+			  DIV({class: "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
                   DIV({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
-                  TAG(FirebugReps.SourceLink.tag, {object: "$rule.sourceLink"})
+				  TAG(FirebugReps.SourceLink.tag, {object: "$rule.sourceLink"})
               )
           ),
         getHref: function(rule) {
@@ -152,26 +151,23 @@ FBL.ns(function() { with(FBL) {
             }
         },
         isTouched: function(rule) {
-            try{
-                var parentSheet = rule.rule.parentStyleSheet;
-                if(Firebug.FireFile.styleSheetExists(parentSheet.href)) {
-                    if(Firebug.FireFile.getHrefInAllowedSites(parentSheet.href)) {
-                        var classes = [];
-                        classes.push("fireFileSaveIcon");
-                        if(Firebug.FireFile.styleSheetStatus[parentSheet.href] != undefined) {
-                            classes.push(Firebug.FireFile.styleSheetStatus[parentSheet.href]);
-                        }
-                        return classes.join(" ");
+            var parentSheet = rule.rule.parentStyleSheet;
+            if(Firebug.FireFile.styleSheetExists(parentSheet.href)) {
+                if(Firebug.FireFile.getHrefInAllowedSites(parentSheet.href)) {
+                    var classes = [];
+                    classes.push("fireFileSaveIcon");
+                    if(Firebug.FireFile.styleSheetStatus[parentSheet.href] != undefined) {
+                        classes.push(Firebug.FireFile.styleSheetStatus[parentSheet.href]);
                     }
+                    return classes.join(" ");
                 }
-            }catch(ex) {
-                // alert(ex);
             }
             return "";
         },
         saveChange: function(e) {
             Firebug.FireFile.saveIconClicked(e.target);
-        }
+        },
+		isFireFile: true
     });
 
     Firebug.FireFile = extend(Firebug.Module, {
@@ -257,11 +253,13 @@ FBL.ns(function() { with(FBL) {
 	    },
 		showContext: function(browser, context) {
 			
+			
 			if(!context) { return; }
 			
 			// CHECK IF ALLOWED FOR THIS PAGE
 			var prePath = top.gBrowser.currentURI.prePath;
 			if(this.hasPrefSitesWithUri(prePath)) {
+				
 				this.enableFireFile();
 			}else{
 				this.disableFireFile();
@@ -291,19 +289,9 @@ FBL.ns(function() { with(FBL) {
                         }
                     }
                 }
-
 			}
-
-			// STYLE SUB PANEL HOOKS
-			try{
-				if(!FirebugContext.getPanel("css")) {
-					Firebug.chrome.switchToPanel(context, "html");
-				}
-				FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
-	            this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);
-			}catch(ex){
-				// Firebug.Console.log(ex);
-			}
+			
+			return true;
 			
 		},
 		enableFireFile: function() {
@@ -320,11 +308,6 @@ FBL.ns(function() { with(FBL) {
             }
         },
         initialize: function() {
-
-			// Setup CSS View
-			/*Firebug.Console.log(FirebugContext.getPanel("css"));
-			FirebugContext.getPanel("css").template = FireFileStyleDomPlate;
-			this.loadCss("chrome://FireFile/content/firefile.css", FirebugContext.getPanel("css").document);*/
 
 			// Setup System Hooks
             this.hookIntoHtmlContext();
@@ -490,6 +473,25 @@ FBL.ns(function() { with(FBL) {
             // HOOK INTO HTML CONTEXT MENU
             var HtmlCssPrototype = Firebug.getPanelType('css').prototype;
 			var HtmlCssContextOrig = HtmlCssPrototype.getContextMenuItems;
+			var HtmlCssSelectOrig = HtmlCssPrototype.select;
+			
+			HtmlCssPrototype.select = function() {
+				
+                // Dispatch original event
+                var result = HtmlCssSelectOrig.apply(this, arguments);
+
+				// Add Stylesheet if not exists
+				if(this.document.styleSheets[this.document.styleSheets.length - 1].href != "chrome://firefile/content/firefile.css") {
+					Firebug.FireFile.loadCss("chrome://FireFile/content/firefile.css", this.document);
+				}
+
+				if(this.template.isFireFile == undefined) {
+					this.template = FireFileStyleDomPlate;
+				}
+
+				return result;
+			};
+			
             HtmlCssPrototype.getContextMenuItems = function() {
                 
                 // PRE
