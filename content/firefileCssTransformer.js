@@ -22,15 +22,16 @@ FBL.ns(function() { with(FBL) {
 			}
 			
 			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
+			
 			var result;
-			var regexp = /(\/\*[^*]+\*\/)[\s]+([^{]+){/g;
+			var regexp = /(\/\*[^*]+\*\/)[\s]*([^{]+){/g;
 			var commentList = {};
-			result = regexp.exec(styleContents);
 			while(result = regexp.exec(styleContents)) {
 				commentList[this.powerTrim(result[2])] = this.powerTrim(result[1]);
 			}
 			
 			this.commentMap[styleSheet.href] = commentList;
+			
 			
 			return commentList;
 		},
@@ -54,8 +55,9 @@ FBL.ns(function() { with(FBL) {
 			
 			// Load Comment Array
 			var commentMap = this.getCommentsWithSelector(styleSheet);
+			
 			if(commentMap != undefined) {				
-				var index = this.powerTrim(rule.selectorText);
+				var index = this.powerTrim(rule.selectorText);				
 				if(commentMap[index] != undefined) {
 					return commentMap[index];
 				}
@@ -75,56 +77,49 @@ FBL.ns(function() { with(FBL) {
 			
             var retVal = "";
             
-            // FETCH DATA
-			try{
+			// Get Comments Map
+			if(Firebug.FireFile.prefs.display_comments && !compress) {
+				var commentMap = this.getCommentsWithSelector(styleSheet);
+			}
+
+			// Loop through Rules
+            for (var i=0; i < styleSheet.cssRules.length; i++) {
+				var style = styleSheet.cssRules[i];
+				var props = this.getCssProps(style);
+				var styleString = "";
 				
-				// Get Original stylesheet contents
-				
-				// Get Comments Map
-				if(Firebug.FireFile.prefs.display_comments && !compress) {
-					var commentMap = this.getCommentsWithSelector(styleSheet);
-				}
+				// Check for empty styles
+				if(props.length > 0 || Firebug.FireFile.prefs.remove_empty_styles === false) {
 
-				// Loop through Rules
-	            for (var i=0; i < styleSheet.cssRules.length; i++) {
-					var style = styleSheet.cssRules[i];
-					var props = this.getCssProps(style);
-					var styleString = "";
-					
-					// Check for empty styles
-					if(props.length > 0 || Firebug.FireFile.prefs.remove_empty_styles === false) {
+					// Append Rules
+					for(var j=0;j<props.length;j++) {
 
-						// Append Rules
-						for(var j=0;j<props.length;j++) {
-
-							// Append Rule as is
-							styleString += this.createRuleString(props[j].name, props[j].value, compress);
-							
-							// Fix CSS3 behaviour
-							if(Firebug.FireFile.prefs.autofix_css3 && props[j].name.substr(0, 4) == "-moz") {
-								if(this.css3CompatibilityList[props[j].name]) {
-									for(var k=0;k<this.css3CompatibilityList[props[j].name].length;k++) {
-										// Add translatable rule
-										styleString += this.createRuleString(this.css3CompatibilityList[props[j].name][k], props[j].value, compress);
-									}
+						// Append Rule as is
+						styleString += this.createRuleString(props[j].name, props[j].value, compress);
+						
+						// Fix CSS3 behaviour
+						if(Firebug.FireFile.prefs.autofix_css3 && props[j].name.substr(0, 4) == "-moz") {
+							if(this.css3CompatibilityList[props[j].name]) {
+								for(var k=0;k<this.css3CompatibilityList[props[j].name].length;k++) {
+									// Add translatable rule
+									styleString += this.createRuleString(this.css3CompatibilityList[props[j].name][k], props[j].value, compress);
 								}
 							}
 						}
-
-						// Append Comment if exists
-						if(Firebug.FireFile.prefs.display_comments && !compress) {
-							if(commentMap[style.selectorText] != undefined) {
-								retVal += commentMap[style.selectorText] + "\n";
-							}
-						}
-
-						// Append Style Definition
-						retVal += this.createStyleString(style.selectorText, styleString, compress);
-						
 					}
-	            }
-			}catch(err) {
-				// Firebug.Console.log(err);
+
+					// Append Comment if exists
+					if(Firebug.FireFile.prefs.display_comments && !compress) {
+						if(commentMap[style.selectorText] != undefined) {
+							retVal += commentMap[style.selectorText] + "\n";
+						}
+					}
+
+					// Append Style Definition
+					retVal += this.createStyleString(style.selectorText, styleString, compress);
+					
+				}
+
 			}
 			
 			return retVal;
