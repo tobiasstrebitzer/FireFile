@@ -12,9 +12,9 @@
   	<script type="application/javascript" src="chrome://FireFile/content/lib/fireformsdialog.js"/>
 	<dialogheader title="Options" description="Seite bearbeiten"/>
 	<groupbox id="group_general"><caption label="General Settings" />
-		<label value="Beschreibung" />
+		<label value="Bezeichnung" />
 		<textbox id="field_label" />
-		<label value="Host" />
+		<label value="Allowed Host" />
 		<textbox id="field_host" />
 	</groupbox>
 	<groupbox id="group_ftp"><caption label="FTP Settings" />
@@ -26,5 +26,7 @@
 		<textbox id="field_ftp_pass" />
 		<label value="Port" />
 		<textbox id="field_ftp_port" />
+		<label value="Remote Directory" />
+		<textbox id="field_ftp_rdir" />
 	</groupbox>
 </dialog>

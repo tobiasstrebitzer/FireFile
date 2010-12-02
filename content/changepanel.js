@@ -186,6 +186,8 @@ FBL.ns(function() { with(FBL) {
 				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
 				var site = Firebug.FireFile.db.grab(id, "sites");
 
+				alert(site.id);
+
 				// Open Edit dialog
 				var editForm = new Firebug.FireFile.FireForms("sites", {
 					validation: {

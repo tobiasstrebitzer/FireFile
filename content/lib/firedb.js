@@ -234,7 +234,7 @@ FBL.ns(function() { with(FBL) {
 		
 		// Grab
 		grab: function(obj, table) {
-			
+			alert("obj:" + obj);
 			// Get default table
 			if(table == undefined) {
 				table = this._table;
@@ -246,6 +246,7 @@ FBL.ns(function() { with(FBL) {
 			}
 			
 			// Db methods
+			alert("obj:" + obj);
 			return this.select("*").from(table).where(obj).limit(1).getResults(true);
 
 		},
