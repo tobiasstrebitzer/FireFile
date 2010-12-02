@@ -86,6 +86,7 @@ FBL.ns(function() { with(FBL) {
             for (var i=0; i < styleSheet.cssRules.length; i++) {
 				var style = styleSheet.cssRules[i];
 				var props = this.getCssProps(style);
+				Firebug.Console.log(props);
 				var styleString = "";
 				
 				// Check for empty styles
@@ -144,8 +145,9 @@ FBL.ns(function() { with(FBL) {
 		getCssProps: function(style) {
 	        var props = [];
 
-			// Fix: remove selector from cssText
-			var cssText = style.cssText.split(style.selectorText).join("");
+			// Fix: remove selector from cssText - Only before {
+			var cssText = style.cssText.split(style.selectorText+" {").join("{");
+			
             var lines = cssText.match(/(?:[^;\(]*(?:\([^\)]*?\))?[^;\(]*)*;?/g);
             var propRE = /\s*([^:\s]*)\s*:\s*(.*?)\s*(! important)?;?$/;
             var line,i=0;
