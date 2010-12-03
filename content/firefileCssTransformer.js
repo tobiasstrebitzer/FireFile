@@ -86,7 +86,6 @@ FBL.ns(function() { with(FBL) {
             for (var i=0; i < styleSheet.cssRules.length; i++) {
 				var style = styleSheet.cssRules[i];
 				var props = this.getCssProps(style);
-				Firebug.Console.log(props);
 				var styleString = "";
 				
 				// Check for empty styles

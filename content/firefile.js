@@ -59,7 +59,6 @@ FBL.ns(function() { with(FBL) {
 			if(result !== false) {
 				return result.split("\n");
 			}
-			Firebug.Console.log(object);
             return [];
         }
     };
@@ -152,6 +151,10 @@ FBL.ns(function() { with(FBL) {
         },
         isTouched: function(rule) {
             var parentSheet = rule.rule.parentStyleSheet;
+
+			// Return inline styles
+			if(parentSheet == undefined) {return "";}
+
             if(Firebug.FireFile.styleSheetExists(parentSheet.href)) {
                 if(Firebug.FireFile.getHrefInAllowedSites(parentSheet.href)) {
                     var classes = [];
