@@ -628,7 +628,7 @@ FBL.ns(function() { with(FBL) {
                 if(Firebug.FireFile.cssTimer) {
                     // RESTART TIMEOUT
                     clearTimeout(Firebug.FireFile.cssTimer);
-                    Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+                    Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
                 }
                        
                 // CHECK IF VALUE WAS CHANGED
@@ -754,34 +754,6 @@ FBL.ns(function() { with(FBL) {
         },
         setStatus: function(img) {
             document.getElementById("firefile-status-image").src = "chrome://FireFile/skin/status_" + img + ".png";
-        },
-        encode64: function(inp) {
-            var key = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-            var chr1,
-            chr2,
-            chr3,
-            enc3,
-            enc4,
-            i = 0,
-            out = "";
-            while (i < inp.length) {
-                chr1 = inp.charCodeAt(i++);
-                if (chr1 > 127) chr1 = 88;
-                chr2 = inp.charCodeAt(i++);
-                if (chr2 > 127) chr2 = 88;
-                chr3 = inp.charCodeAt(i++);
-                if (chr3 > 127) chr3 = 88;
-                if (isNaN(chr3)) {
-                    enc4 = 64;
-                    chr3 = 0;
-                } else enc4 = chr3 & 63
-                if (isNaN(chr2)) {
-                    enc3 = 64;
-                    chr2 = 0;
-                } else enc3 = ((chr2 << 2) | (chr3 >> 6)) & 63
-                out += key.charAt((chr1 >> 2) & 63) + key.charAt(((chr1 << 4) | (chr2 >> 4)) & 63) + key.charAt(enc3) + key.charAt(enc4);
-            }
-            return encodeURIComponent(out);
         },
         downloadChange: function(index) {
                             
@@ -943,7 +915,7 @@ FBL.ns(function() { with(FBL) {
             }
             
             // START TRANSFER
-            xmlhttp.send(filetype + "=" + this.encode64(contents) + "&file=" + this.encode64(href) + "&action=save&code=" + site.hash + "&index="+index);
+            xmlhttp.send(filetype + "=" + window.btoa(contents) + "&file=" + window.btoa(href) + "&action=save&code=" + site.hash + "&index="+index);
             
 		    if(Firebug.FireFile.prefs.enable_debug_mode) {
 		        Firebug.Console.log("params:");
@@ -953,7 +925,7 @@ FBL.ns(function() { with(FBL) {
 		            href: href
 		        });
 		        Firebug.Console.log("request:");
-		        Firebug.Console.log(filetype + "=" + this.encode64(contents) + "&file=" + this.encode64(href) + "&action=save&code=" + site.hash + "&index="+index);
+		        Firebug.Console.log(filetype + "=" + window.btoa(contents) + "&file=" + window.btoa(href) + "&action=save&code=" + site.hash + "&index="+index);
 		    }
             
             return true;
