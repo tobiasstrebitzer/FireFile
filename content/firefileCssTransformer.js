@@ -144,8 +144,9 @@ FBL.ns(function() { with(FBL) {
 		getCssProps: function(style) {
 	        var props = [];
 
-			// Fix: remove selector from cssText
-			var cssText = style.cssText.split(style.selectorText).join("");
+			// Fix: remove selector from cssText - Only before {
+			var cssText = style.cssText.split(style.selectorText+" {").join("{");
+			
             var lines = cssText.match(/(?:[^;\(]*(?:\([^\)]*?\))?[^;\(]*)*;?/g);
             var propRE = /\s*([^:\s]*)\s*:\s*(.*?)\s*(! important)?;?$/;
             var line,i=0;
