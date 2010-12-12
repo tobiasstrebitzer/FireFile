@@ -657,7 +657,7 @@ FBL.ns(function() { with(FBL) {
                                         Firebug.FireFile.styleSheetStatus[styleSheet.href] = "autosave";
                                         
                                         // START NEW TIMEOUT
-                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
                                     }
                                 }
                             }
@@ -674,7 +674,7 @@ FBL.ns(function() { with(FBL) {
         autoSaveTimer: function() {
             if(Firebug.FireFile.cssEditing) {
                 // STOP OLD TIMEOUT
-                Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+                Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
             }else{
                 // SAVE UNSAVED CHANGES
                 for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
