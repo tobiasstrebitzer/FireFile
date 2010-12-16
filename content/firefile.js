@@ -251,9 +251,67 @@ FBL.ns(function() { with(FBL) {
                 return false;
             }  
 		},
-		initContext: function(context, persistedState) {
+		destroyContext: function(context, persistedState) {
 
-	    },
+			var stylesheets = context.window.document.styleSheets;
+
+			// Loop through all stylesheets
+			for(var i=0;i<stylesheets.length;i++) {
+				this.destroyChanges(stylesheets[i].href);
+			}
+			
+		},
+		destroyChanges: function(href) {
+			var modifiedIndex = this.styleSheetIndexByHref(href);
+			if(modifiedIndex !== false) {
+				Firebug.FireFile.modifiedStylesheets.splice(modifiedIndex,1); 
+			}else{
+				return false;
+			}
+		},
+		getStyleSheetOwnerNode: function(sheet) {
+		    for (; sheet && !sheet.ownerNode; sheet = sheet.parentStyleSheet);
+		    return sheet.ownerNode;
+		},
+        cancelAllChanges: function() {
+            // SAVE UNSAVED CHANGES
+            for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
+				
+	            var href = Firebug.FireFile.modifiedStylesheets[i].href;
+
+				// Destroy the changes (FireFile)
+				Firebug.FireFile.destroyChanges(href);
+
+				// Reset the changes (Firebug)
+				Firebug.FireFile.resetStylesheet(href);
+
+				// Reload Panel
+				FirebugContext.getPanel("firefile").select();
+            }
+        },
+		resetStylesheet: function(href) {
+			try{
+			var stylesheets = FirebugContext.window.document.styleSheets;
+			// Loop through all stylesheets
+			for(var i=0;i<stylesheets.length;i++) {
+				if(stylesheets[i].href == href) {
+					// Get current link
+		            var ownerNode = this.getStyleSheetOwnerNode(stylesheets[i]);
+		
+					// Add new link
+		            ownerNode.parentNode.insertBefore(ownerNode, ownerNode.nextSibling);
+	
+					// Delete old link
+		            ownerNode.parentNode.insertBefore(ownerNode, ownerNode.nextSibling);
+				}
+			}
+			
+			}catch(ex) {
+				Firebug.Console.log(ex);
+				
+				
+			}
+		},
 		showContext: function(browser, context) {
 			
 			
@@ -262,7 +320,6 @@ FBL.ns(function() { with(FBL) {
 			// CHECK IF ALLOWED FOR THIS PAGE
 			var prePath = top.gBrowser.currentURI.prePath;
 			if(this.hasPrefSitesWithUri(prePath)) {
-				
 				this.enableFireFile();
 			}else{
 				this.disableFireFile();

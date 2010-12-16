@@ -54,7 +54,8 @@ FBL.ns(function() { with(FBL) {
         styleSheetTag:
             DIV({class: "cssChangesTopContainer"},
                 DIV({class: "cssChangesContainer FireFileChangeHook", styleurl: "$rule.href"},
-                    SPAN({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
+                    SPAN({class: "fireFileCancelIcon", onclick: "$cancelChange", title: $STR("ClickToCancelChanges", "strings_firefile")}),
+					SPAN({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
                     TAG(FirebugReps.SourceLink.tag, {object: "$rule"}),
                     SPAN({class: "cssChangesPath"}, 
                         "$rule.href"
@@ -87,6 +88,19 @@ FBL.ns(function() { with(FBL) {
         },
         saveChange: function(e) {
             Firebug.FireFile.saveIconClicked(e.target);
+        },
+        cancelChange: function(e) {
+            var node = getAncestorByClass(e.target, "FireFileChangeHook");
+            var href = node.getAttribute('styleurl');
+
+			// Destroy the changes (FireFile)
+			Firebug.FireFile.destroyChanges(href);
+			
+			// Reset the changes (Firebug)
+			Firebug.FireFile.resetStylesheet(href);
+			
+			// Reload Panel
+			FirebugContext.getPanel("firefile").select();
         }
     });
 
@@ -201,6 +215,7 @@ FBL.ns(function() { with(FBL) {
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
                 var result = PromptService.confirm(null, Firebug.FireFile.__("DeleteSite"), Firebug.FireFile.__("ReallyDeleteSite", Firebug.FireFile.sitesArray[siteindex].label));
                 if(result === true) {
+	
                     // DELETE SITE
                     Firebug.FireFile.sitesArray.splice(siteindex, 1);
                     Firebug.FireFile.saveSitesArray();
@@ -287,7 +302,8 @@ FBL.ns(function() { with(FBL) {
 			
 			// Actions
             var ret = [
-                {label: Firebug.FireFile.__("save_all_changes"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } }
+                {label: Firebug.FireFile.__("save_all_changes"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } },
+				{label: Firebug.FireFile.__("cancel_all_changes"), tooltiptext: $STR("CancelAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.cancelAllChanges(); } }
             ];
 
 			// Toggles

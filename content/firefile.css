@@ -133,6 +133,20 @@ div.cssChangesContainer span.fireFileSaveIcon {
     margin: 0px 4px 0px 0px !important;
 }
 
+div.cssChangesContainer span.fireFileCancelIcon:hover {
+    background: url(chrome://FireFile/skin/firefile_cancel_hover.png);
+}
+
+div.cssChangesContainer span.fireFileCancelIcon {
+    background: url(chrome://FireFile/skin/firefile_cancel.png);
+    float: left;
+    cursor: pointer;
+    display: inline;
+    width: 16px;
+    height: 16px;
+    margin: 0px 2px 0px 0px !important;
+}
+
 div.cssChangesContainer span.fireFileSaveIcon:hover {
     background: url(chrome://FireFile/skin/firefile_save_hover.png);
 }

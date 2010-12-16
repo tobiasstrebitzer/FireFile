@@ -14,7 +14,12 @@ Download the latest version from github (Download- Button) in ".zip" file format
 ## Version History
 
 * 0.8.6 (16.12.2010)
-Hotfix to solve !important issue
+** feature: Added possibility to cancel changes in FireFile registered sites list (via "cancel" icon)
+** feature: Added context menu option to cancel all changes made
+** feature: Canceling changes also reloads the canceled css- files (and so resets the firebug changes)
+** bugfix: !important declarations are no more ignored
+** bugfix: FireFile changes get dismissed when context is destroyed (reload, close)
+** meta: Updated Help Content (when no site is registered)
 
 * 0.8.5 (15.12.2010)
-First stable release
+** First stable release
