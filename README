@@ -10,3 +10,11 @@ Download the latest version from github (Download- Button) in ".zip" file format
 ## FEATURES
 
 * Remote saving css changes
+
+## Version History
+
+* 0.8.6 (16.12.2010)
+Hotfix to solve !important issue
+
+* 0.8.5 (15.12.2010)
+First stable release
