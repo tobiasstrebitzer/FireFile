@@ -3,7 +3,7 @@
   <Description about="urn:mozilla:install-manifest">
     <em:id>firefile@strebitzer.at</em:id>
     <em:type>2</em:type>
-    <em:version>0.8.4</em:version>
+    <em:version>0.8.6</em:version>
   	<em:iconURL>chrome://FireFile/skin/firefile_32.png</em:iconURL>
   	<em:contributor></em:contributor>
     <em:name>FireFile</em:name>

@@ -55,6 +55,14 @@ span.cssFireFileHostEdit {
     background: url(chrome://FireFile/skin/firefile_label_site.png);
 }
 
+.hiddenClass {
+	display: none;
+}
+
+span.cssFireFileHostConfig {
+    background: url(chrome://FireFile/skin/firefile_config_site.png);
+}
+
 span.cssFireFileHostDelete {
     background: url(chrome://FireFile/skin/firefile_delete_site.png);
 }
@@ -131,6 +139,20 @@ div.cssChangesContainer span.fireFileSaveIcon {
     width: 16px;
     height: 16px;
     margin: 0px 4px 0px 0px !important;
+}
+
+div.cssChangesContainer span.fireFileCancelIcon:hover {
+    background: url(chrome://FireFile/skin/firefile_cancel_hover.png);
+}
+
+div.cssChangesContainer span.fireFileCancelIcon {
+    background: url(chrome://FireFile/skin/firefile_cancel.png);
+    float: left;
+    cursor: pointer;
+    display: inline;
+    width: 16px;
+    height: 16px;
+    margin: 0px 2px 0px 0px !important;
 }
 
 div.cssChangesContainer span.fireFileSaveIcon:hover {

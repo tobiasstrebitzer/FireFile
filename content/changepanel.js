@@ -54,7 +54,8 @@ FBL.ns(function() { with(FBL) {
         styleSheetTag:
             DIV({class: "cssChangesTopContainer"},
                 DIV({class: "cssChangesContainer FireFileChangeHook", styleurl: "$rule.href"},
-                    SPAN({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
+                    SPAN({class: "fireFileCancelIcon", onclick: "$cancelChange", title: $STR("ClickToCancelChanges", "strings_firefile")}),
+					SPAN({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
                     TAG(FirebugReps.SourceLink.tag, {object: "$rule"}),
                     SPAN({class: "cssChangesPath"}, 
                         "$rule.href"
@@ -87,6 +88,19 @@ FBL.ns(function() { with(FBL) {
         },
         saveChange: function(e) {
             Firebug.FireFile.saveIconClicked(e.target);
+        },
+        cancelChange: function(e) {
+            var node = getAncestorByClass(e.target, "FireFileChangeHook");
+            var href = node.getAttribute('styleurl');
+
+			// Destroy the changes (FireFile)
+			Firebug.FireFile.destroyChanges(href);
+			
+			// Reset the changes (Firebug)
+			Firebug.FireFile.resetStylesheet(href);
+			
+			// Reload Panel
+			FirebugContext.getPanel("firefile").select();
         }
     });
 
@@ -103,13 +117,16 @@ FBL.ns(function() { with(FBL) {
                                 DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
                                     "$site.label",
                                     SPAN({class: "cssFireFileHostLabel"},
-                                        A({href: "$site.url", target: "_blank"}, "$site.url|shortenUrl")
+                                        A({href: "$site.url", target: "_blank"}, "$site.host|shortenUrl")
                                     )
                                 ),
                                 DIV({class: "cssFireFileSiteIconContainer"},
                                     SPAN({class: "cssFireFileSiteIcon cssFireFileHostDelete", title: $STR("TrashIconTooltip", "strings_firefile"), onclick: "$onDeleteClick"}),
                                     SPAN({class: "cssFireFileSiteIcon cssFireFileHostEdit", title: $STR("RenameIconTooltip", "strings_firefile"), onclick: "$onEditClick"}),
-                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostAutoSave cssFireFileHostAutoSave$site.autosave|parseBool", title: $STR("AutoSaveIconTooltip", "strings_firefile"), onclick: "$onAutoSaveClick"})
+                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostAutoSave cssFireFileHostAutoSave$site.autosave|parseBool", title: $STR("AutoSaveIconTooltip", "strings_firefile"), onclick: "$onAutoSaveClick"}),
+									A({href: "$site.url", target: "_blank", class: "$site|setConfigClass"}, 
+										SPAN({class: "cssFireFileSiteIcon cssFireFileHostConfig", title: $STR("ConfigIconTooltip", "strings_firefile")})
+									)
                                 )
                             ),
                             DIV({role : 'group'},
@@ -162,6 +179,9 @@ FBL.ns(function() { with(FBL) {
                 }
             },
             shortenUrl: function(data) {
+				if(data.substr(-1) != "/") {
+					data = data + "/";
+				}
                 if(data.length > 80) {
                     return data.substr(0, 80) + "...";
                 }else{
@@ -179,6 +199,13 @@ FBL.ns(function() { with(FBL) {
 												
 				return Firebug.FireFile.getStylesheetsBySite(site);
 			},
+			setConfigClass: function(site) {
+				if(site.is_ftp == 0) {
+					return "";
+				}else{
+					return "hiddenClass";
+				}
+			},
             onEditClick: function(e) {
 	
 				// FireForms Edit function
@@ -194,7 +221,7 @@ FBL.ns(function() { with(FBL) {
 							error: 'Please enter a valid host name (incl. http)'
 						},
 						label: {
-							regexp: '^[a-zA-Z0-9-_\s]+$',
+							regexp: '^[a-zA-Z0-9-_\s.]+$',
 							error: 'Please enter a valid site label'
 						}
 					}
@@ -229,6 +256,7 @@ FBL.ns(function() { with(FBL) {
 */
                 
             },
+
             onAddSiteClick: function(e) {
 	
 				// Get current site
@@ -347,7 +375,8 @@ FBL.ns(function() { with(FBL) {
 			
 			// Actions
             var ret = [
-                {label: Firebug.FireFile.__("save_all_changes"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } }
+                {label: Firebug.FireFile.__("save_all_changes"), tooltiptext: $STR("SaveAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.saveAllChanges(); } },
+				{label: Firebug.FireFile.__("cancel_all_changes"), tooltiptext: $STR("CancelAllChangesTooltip", "strings_firefile"), command: function() { Firebug.FireFile.cancelAllChanges(); } }
             ];
 
 			// Toggles

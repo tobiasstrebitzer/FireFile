@@ -140,6 +140,8 @@ FBL.ns(function() { with(FBL) {
 			}
 						
 			var query = "INSERT INTO "+ table + " ( " + keys.join(", ") + " ) VALUES ( " + values.join(", ") + " );";
+			Firebug.Console.log(query);
+			
 			
 			var statement = this._dbhandle.createStatement(query);
 			statement.execute();
@@ -302,6 +304,10 @@ FBL.ns(function() { with(FBL) {
 		
 		fetch: function() {
 			return this.getResults(true);
+		},
+		
+		count: function() {
+			return this.getResults().length;
 		},
 		
 		// Fetch

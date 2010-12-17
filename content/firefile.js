@@ -153,6 +153,10 @@ FBL.ns(function() { with(FBL) {
         },
         isTouched: function(rule) {
             var parentSheet = rule.rule.parentStyleSheet;
+
+			// Return inline styles
+			if(parentSheet == undefined) {return "";}
+
             if(Firebug.FireFile.styleSheetExists(parentSheet.href)) {
                 if(Firebug.FireFile.getHrefInAllowedSites(parentSheet.href)) {
                     var classes = [];
@@ -249,9 +253,64 @@ FBL.ns(function() { with(FBL) {
                 return false;
             }  
 		},
-		initContext: function(context, persistedState) {
+		destroyContext: function(context, persistedState) {
+			var stylesheets = context.window.document.styleSheets;
+			// Loop through all stylesheets
+			for(var i=0;i<stylesheets.length;i++) {
+				this.destroyChanges(stylesheets[i].href);
+			}
+		},
+		destroyChanges: function(href) {
+			var modifiedIndex = this.styleSheetIndexByHref(href);
+			if(modifiedIndex !== false) {
+				Firebug.FireFile.modifiedStylesheets.splice(modifiedIndex,1); 
+			}else{
+				return false;
+			}
+		},
+		getStyleSheetOwnerNode: function(sheet) {
+		    for (; sheet && !sheet.ownerNode; sheet = sheet.parentStyleSheet);
+		    return sheet.ownerNode;
+		},
+        cancelAllChanges: function() {
+            // SAVE UNSAVED CHANGES
+            for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
+				
+	            var href = Firebug.FireFile.modifiedStylesheets[i].href;
 
-	    },
+				// Destroy the changes (FireFile)
+				Firebug.FireFile.destroyChanges(href);
+
+				// Reset the changes (Firebug)
+				Firebug.FireFile.resetStylesheet(href);
+
+				// Reload Panel
+				FirebugContext.getPanel("firefile").select();
+            }
+        },
+		resetStylesheet: function(href) {
+			try{
+			var stylesheets = FirebugContext.window.document.styleSheets;
+			// Loop through all stylesheets
+			for(var i=0;i<stylesheets.length;i++) {
+				if(stylesheets[i].href == href) {
+					// Get current link
+		            var ownerNode = this.getStyleSheetOwnerNode(stylesheets[i]);
+		
+					// Add new link
+		            ownerNode.parentNode.insertBefore(ownerNode, ownerNode.nextSibling);
+	
+					// Delete old link
+		            ownerNode.parentNode.insertBefore(ownerNode, ownerNode.nextSibling);
+				}
+			}
+			
+			}catch(ex) {
+				Firebug.Console.log(ex);
+				
+				
+			}
+		},
 		showContext: function(browser, context) {
 			
 			// Test db (force init)
@@ -260,9 +319,8 @@ FBL.ns(function() { with(FBL) {
 			if(!context) { return; }
 			
 			// CHECK IF ALLOWED FOR THIS PAGE
-			var prePath = top.gBrowser.currentURI.prePath;
-			if(this.hasPrefSitesWithUri(prePath)) {
-				
+			var url = top.gBrowser.currentURI.asciiSpec;
+			if(this.hasPrefSitesWithUri(url)) {
 				this.enableFireFile();
 			}else{
 				this.disableFireFile();
@@ -282,9 +340,16 @@ FBL.ns(function() { with(FBL) {
                                 url: site_script,
                                 hash: keyholder.innerHTML,
                                 label: this.getHostFromHref(site_script),
-								isftp: 0
-							});
-
+								host: "http://" + this.getHostFromHref(site_script),
+								autosave: 0,
+								ftp_host: null,
+								ftp_user: null,
+								ftp_pass: null,
+								ftp_port: null,
+								ftp_rdir: null,
+								is_ftp: 0
+							}, "sites");
+							
 							// Update status
                             Firebug.FireFile.setStatus("closed");
                             
@@ -405,13 +470,9 @@ FBL.ns(function() { with(FBL) {
         getActiveWindow: function() {
             return FirebugChrome.getCurrentBrowser()._contentWindow;
         },
-		hasPrefSitesWithUri: function(prePath) {
-			// SHORTER WAY
-			if(Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch).getCharPref("extensions.firefile.sites").indexOf(prePath) != -1) {
-				return true;
-			}else{
-				return false;
-			}
+		hasPrefSitesWithUri: function(url) {
+			var count = Firebug.FireFile.db.select("*").from("sites").where("host = '" + url + "' OR '" + url + "' LIKE host || '%'").count();
+			return count > 0;			
 		},
 		changesList: {},
         getSitesArray: function() {
@@ -681,7 +742,7 @@ FBL.ns(function() { with(FBL) {
 	                                        Firebug.FireFile.styleSheetStatus[styleSheet.href] = "autosave";
 
 	                                        // START NEW TIMEOUT
-	                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+	                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
 	                                    }
 										
 									}
@@ -700,7 +761,7 @@ FBL.ns(function() { with(FBL) {
         autoSaveTimer: function() {
             if(Firebug.FireFile.cssEditing) {
                 // STOP OLD TIMEOUT
-                Firebug.FireFile.cssTimer = FirebugContext.setTimeout("Firebug.FireFile.autoSaveTimer()", 3000);
+                Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
             }else{
                 // SAVE UNSAVED CHANGES
                 for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {

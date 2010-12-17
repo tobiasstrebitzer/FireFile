@@ -93,16 +93,15 @@ FBL.ns(function() { with(FBL) {
 
 					// Append Rules
 					for(var j=0;j<props.length;j++) {
-
-						// Append Rule as is
-						styleString += this.createRuleString(props[j].name, props[j].value, compress);
+						
+						styleString += this.createRuleString(props[j].name, props[j].value + props[j].important, compress);
 						
 						// Fix CSS3 behaviour
 						if(Firebug.FireFile.prefs.autofix_css3 && props[j].name.substr(0, 4) == "-moz") {
 							if(this.css3CompatibilityList[props[j].name]) {
 								for(var k=0;k<this.css3CompatibilityList[props[j].name].length;k++) {
 									// Add translatable rule
-									styleString += this.createRuleString(this.css3CompatibilityList[props[j].name][k], props[j].value, compress);
+									styleString += this.createRuleString(this.css3CompatibilityList[props[j].name][k], props[j].value + props[j].important, compress);
 								}
 							}
 						}
