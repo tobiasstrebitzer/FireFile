@@ -39,7 +39,6 @@ FBL.ns(function() { with(FBL) {
 					alert(error);
 				}
 				
-				alert("ok");
 				// dbhandle.executeSimpleSQL("CREATE TABLE models (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)");
 			}
 
@@ -177,12 +176,12 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		where: function(obj, value) {
-			
+
 			if(obj == undefined) {
 				this._where = [];
 			}else if(obj instanceof Array) {
 				this._where = obj;
-			}else if(obj.constructor == String) {
+			}else if(typeof(obj)=='string' && isNaN(obj)) {
 				if(value != undefined) {
 					if(!isNaN(value)) {
 						this._where.push(obj + " = " + value);
@@ -234,7 +233,6 @@ FBL.ns(function() { with(FBL) {
 		
 		// Grab
 		grab: function(obj, table) {
-			alert("obj:" + obj);
 			// Get default table
 			if(table == undefined) {
 				table = this._table;
@@ -246,7 +244,6 @@ FBL.ns(function() { with(FBL) {
 			}
 			
 			// Db methods
-			alert("obj:" + obj);
 			return this.select("*").from(table).where(obj).limit(1).getResults(true);
 
 		},
@@ -312,6 +309,9 @@ FBL.ns(function() { with(FBL) {
 			
 			var retVal = [];
 			var query = this.getQuery();
+			Firebug.Console.log(query);
+			
+			
 			var statement = this._dbhandle.createStatement(query);
 
 			try {

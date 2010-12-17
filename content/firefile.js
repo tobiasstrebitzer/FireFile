@@ -1022,9 +1022,6 @@ FBL.ns(function() { with(FBL) {
 			// Query sites table
 			var site = Firebug.FireFile.db.select("*").from("sites").where("url LIKE 'http://" + host + "%'").fetch();
 			
-			Firebug.Console.log(site);
-			alert("ok");
-			
             var sites = this.getSitesArray();
             for (i in sites) {
                 if(sites[i].url != "") {
