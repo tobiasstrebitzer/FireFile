@@ -37,51 +37,75 @@ FBL.ns(function() { with(FBL) {
 			}
 		},
 		
-		saveFileFtp: function(serverconfig, filePath, fileName, fileHandle, onError, onSuccess) {
+		saveFileFtp: function(site, filePath, fileName, fileHandle, onError, onSuccess) {
 			var self = this;
-			var ftp = (new Firebug.FireFile.FtpClient(serverconfig.host, serverconfig.port))
-			  .user(serverconfig.user)
-			  .pass(serverconfig.pass)
-			  .pwd()
-			  .cwd(filePath)
-			  .type('A')
-			  .port(null, 50246)
-			  .list(function(files) {
+			
+			try{
 				
-					// Check if file exists
-					var fileExists = false;
-					for(var i=0;i<files.length;i++) {
-						if(files[i].file == fileName) {
-							fileExists = true;
+				var self = this;
+				var ftp = (new Firebug.FireFile.FtpClient(site.ftp_host.replace("ftp://", ""), site.ftp_port))
+				  .user(site.ftp_user)
+				  .pass(site.ftp_pass)
+				  .getResult(function(data) {
+						var lastresponse = this.responses[this.responses.length - 1];
+						if(lastresponse.substr(0,3) == "530") {
+							// Login incorrect
+							onError.call(self, {
+								msg: "InvalidLogin"
+							});
+							this.quit
 						}
-					}
+						Firebug.Console.log(this);
+				  });
+				
+				// Check if login was succesful
+				
+				ftp.pwd()
+				  .cwd(filePath)
+				  .type('A')
+				  .port(null, 50246)
+				  .list(function(files) {
+				
+						// Check if file exists
+						var fileExists = false;
+						for(var i=0;i<files.length;i++) {
+							if(files[i].file == fileName) {
+								fileExists = true;
+							}
+						}
 					
-					// Cancel if file does not exist
-					if(!fileExists) {
-						onError.call(self, {
-							msg: "FileDoesNotExist"
-						});
-						this.quit();
-					}else{
-						this.type('I')
-						  .port(null, 50247)
-						  .storfile(fileHandle, fileName, function(success) {
-								if(!success) {
-									onError.call(self, {
-										msg: "UploadError"
-									});
-								}else{
-									onSuccess.call(self, {
-										msg: "FireSuccessfullySaved"
-									});
-								}
-							}).quit();
-					}
-			  });
+						// Cancel if file does not exist
+						if(!fileExists) {
+							onError.call(self, {
+								msg: "FileDoesNotExist"
+							});
+							this.quit();
+						}else{
+							this.type('I')
+							  .port(null, 50247)
+							  .storfile(fileHandle, fileName, function(success) {
+									if(!success) {
+										onError.call(self, {
+											msg: "UploadError"
+										});
+									}else{
+										onSuccess.call(self, {
+											msg: "FireSuccessfullySaved"
+										});
+									}
+								}).quit();
+						}
+				  });
+				
+			}catch(ex){
+				Firebug.Console.log(ex);
+			
+			
+			}
+			
 		}
-		
 	});
 
-	Firebug.registerModule(Firebug.FireFile.FtpTools);
+	Firebug.registerModule(Firebug.FireFile.DataUtils);
 
 }});

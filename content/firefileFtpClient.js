@@ -57,7 +57,7 @@ FBL.ns(function() { with(FBL) {
 	      },
 	      onDataAvailable: function(request, context, input, offset, count){
 	        var data = self.bstream.readBytes(count);
-	        log(data);
+			log(data);
 	        self.responses.push(data);
 	        if(self.flag) self.next();
 	      }
@@ -123,10 +123,28 @@ FBL.ns(function() { with(FBL) {
 	    })
 	    .wait_set('LIST');
 	  },
+	  list: function(callback){
+		var self = this;
+	    return this.set(function(){
+	      this.server_func_available = function(request, context, input, offset, count){
+	        var data = this.server_bstream.readBytes(count);
+	        this.lastresult = data;
+					log(data);
+					if(callback != undefined) {
+						callback.call(self, self.fetchListResult(data));
+					}
+	      }
+	      this.next();
+	    })
+	    .wait_set('LIST');
+	  },
+	  getResult: function(callback) {
+		var self = this;
+	    return this.set(callback);
+	  },
 	  retr: function(file){
 	    return this.set(function(){
 	      var stream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
-	      //面倒なのtempフォルダに
 	      var tmp = DirectoryService.get("TmpD", Ci.nsIFile);
 	      tmp.append(file);
 	      stream.init(tmp, 0x04 | 0x08 | 0x20, 664, 0);
@@ -201,7 +219,8 @@ FBL.ns(function() { with(FBL) {
 	  },
 */
 	  port: function(address, port){
-	    if(!address) address = this.getHostIP();
+	    //if(!address) address = this.getHostIP();
+		if(!address) address = "localhost";
 	    //if(!port)
 	    address = address.replace(/\./g, ',');
 	    var h = Math.floor(port / 256);

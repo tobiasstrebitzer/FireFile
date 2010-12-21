@@ -29,7 +29,7 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		ftpTest: function() {
-			
+		
 			var serverconfig = {
 				name: "strebitzer.at",
 				rdir: "/html/",

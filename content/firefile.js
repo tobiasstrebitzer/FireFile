@@ -947,7 +947,40 @@ FBL.ns(function() { with(FBL) {
 			}
 		},
 		sendFileFTP: function(index, contents, href, site, filetype, successEvent, errorEvent) {
-			Firebug.Console.log("send ftp");
+			try{
+				Firebug.Console.log("send ftp");
+			
+				// Get Stylesheet data and guess filename
+				var fileName = Firebug.FireFile.filenameFromHref(href);
+				var fileHost = Firebug.FireFile.getHostFromHref(href);
+				var fileUrl = href.replace(fileName, "");
+				var fileUri = fileUrl.replace("http://" + fileHost + "/", ""); // todo: do this in one go
+				var filePath = site.ftp_rdir + fileUri;
+			
+				Firebug.Console.log({
+					"fileName": fileName,
+					"fileHost": fileHost,
+					"fileUrl": fileUrl,
+					"fileUri": fileUri,
+					"filePath": filePath
+				});
+				
+				// Save local copy of file
+				var fileHandle = Firebug.FireFile.DataUtils.saveTemporaryFile(fileName, contents);
+					
+				Firebug.FireFile.DataUtils.saveFileFtp(site, filePath, fileName, fileHandle, 
+					// onError
+					function(error) {
+						Firebug.Console.log(error);
+					},
+					// onSuccess
+					function(success) {
+						Firebug.Console.log(success);
+					}
+				);
+			}catch(ex) {
+				Firebug.Console.log(ex);
+			}
 		},
 		sendFileScript: function(index, contents, href, site, filetype, successEvent, errorEvent) {
             
