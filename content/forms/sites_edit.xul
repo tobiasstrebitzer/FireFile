@@ -23,7 +23,7 @@
 		<label value="Benutzername" />
 		<textbox id="field_ftp_user" />
 		<label value="Passwort" />
-		<textbox id="field_ftp_pass" />
+		<textbox id="field_ftp_pass" type="password" />
 		<label value="Port" />
 		<textbox id="field_ftp_port" />
 		<label value="Remote Directory" />

@@ -39,6 +39,35 @@ FBL.ns(function() { with(FBL) {
     const PromptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].getService(Components.interfaces.nsIPromptService);
     const FireFilePrefDomain = "extensions.firefile";
 
+	var scripthostvalidation = {
+		host: {
+			regexp: '(http|https):\/\/[a-zA-Z0-9.-_+/?&;]+',
+			error: 'Please enter a valid host name (incl. http)'
+		},
+		label: {
+			regexp: "^[a-zA-Z0-9-_ .]+$",
+			error: 'Please enter a valid site label'
+		}
+	};
+	
+	var ftphostvalidation = {
+		host: {
+			regexp: '(http|https):\/\/[a-zA-Z0-9.-_+/?&;]+',
+			error: 'Please enter a valid host name (incl. http)'
+		},
+		label: {
+			regexp: "^[a-zA-Z0-9-_ .]+$",
+			error: 'Please enter a valid site label'
+		},
+		ftp_host: {
+			regexp: '(ftp):\/\/[a-zA-Z0-9.-_+/?&;]+',
+			error: 'Please enter a valid ftp host (incl. ftp://)'
+		},
+		ftp_pass: {
+			password: true
+		}
+	};
+	
     var CSSDomplateBase = {
         isEditable: function(rule)
         {
@@ -55,6 +84,7 @@ FBL.ns(function() { with(FBL) {
             DIV({class: "cssChangesTopContainer"},
                 DIV({class: "cssChangesContainer FireFileChangeHook", styleurl: "$rule.href"},
                     SPAN({class: "fireFileCancelIcon", onclick: "$cancelChange", title: $STR("ClickToCancelChanges", "strings_firefile")}),
+					SPAN({class: "fireFileDownloadIcon", onclick: "$downloadChange", title: $STR("ClickToDownloadChanges", "strings_firefile")}),
 					SPAN({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
                     TAG(FirebugReps.SourceLink.tag, {object: "$rule"}),
                     SPAN({class: "cssChangesPath"}, 
@@ -88,6 +118,9 @@ FBL.ns(function() { with(FBL) {
         },
         saveChange: function(e) {
             Firebug.FireFile.saveIconClicked(e.target);
+        },
+        downloadChange: function(e) {
+            Firebug.FireFile.downloadIconClicked(e.target);
         },
         cancelChange: function(e) {
             var node = getAncestorByClass(e.target, "FireFileChangeHook");
@@ -208,23 +241,23 @@ FBL.ns(function() { with(FBL) {
 			},
             onEditClick: function(e) {
 	
-				// FireForms Edit function
 				// Get current site
 				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
 				var site = Firebug.FireFile.db.grab(id, "sites");
 
 				// Open Edit dialog
+				var params = {};
+				
+				if(site.is_ftp) {
+					// FTP Site
+					params.validation = ftphostvalidation;
+				}else{
+					// Script Site
+					params.validation = scripthostvalidation;
+				}
+				
 				var editForm = new Firebug.FireFile.FireForms("sites", {
-					validation: {
-						host: {
-							regexp: '(ftp|http|https):\/\/[a-zA-Z0-9.-_+/?&;]+',
-							error: 'Please enter a valid host name (incl. http)'
-						},
-						label: {
-							regexp: '^[a-zA-Z0-9-_\s.]+$',
-							error: 'Please enter a valid site label'
-						}
-					}
+					validation: scripthostvalidation
 				});
 				var updated_site = editForm.editDialog(site);
 
@@ -235,37 +268,38 @@ FBL.ns(function() { with(FBL) {
 				
 				// Refresh List
 			    FirebugContext.getPanel("firefile").select();
-	
-	
-                /*
-                var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
-                var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
-                var check = {value: false};
-                var input = {value: Firebug.FireFile.sitesArray[siteindex].label};
-                var result = PromptService.prompt(null, Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), input, null, check);
-
-                if(result && input.value != "") {
-                    if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
-                        Firebug.FireFile.sitesArray[siteindex].label = input.value;
-                        Firebug.FireFile.saveSitesArray();
-                        FirebugContext.getPanel("firefile").select();
-                    }else{
-                        Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
-                    }
-                }
-*/
                 
             },
 
             onAddSiteClick: function(e) {
-	
-				// Get current site
-				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
-				var site = Firebug.FireFile.db.grab(id, "sites");
+
+				var host = top.gBrowser.currentURI.host;				
+
+				// Create empty site
+				var site = {
+					label: host,
+					hash: "",
+					url: "",
+					host: "http://" + host,
+					autosave: "",
+					ftp_host: "ftp://" + host,
+					ftp_user: "",
+					ftp_pass: "",
+					ftp_port: "21",
+					ftp_rdir: "/",
+					is_ftp: 1
+				};
 
 				// Open Edit dialog
-				var editForm = new Firebug.FireFile.FireForms("sites");
-				editForm.editDialog();
+				var editForm = new Firebug.FireFile.FireForms("sites", {
+					validation: scripthostvalidation
+				});
+				var new_site = editForm.editDialog(site);
+
+				// Save if valid
+				if(new_site) {
+					Firebug.FireFile.db.insert(new_site, "sites");
+				}
 
 				// Refresh List
                 FirebugContext.getPanel("firefile").select();
@@ -294,22 +328,25 @@ FBL.ns(function() { with(FBL) {
                 FirebugContext.getPanel("firefile").select();
             },
             onDeleteClick: function(e) {
-                var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
-                var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
-                var result = PromptService.confirm(null, Firebug.FireFile.__("DeleteSite"), Firebug.FireFile.__("ReallyDeleteSite", Firebug.FireFile.sitesArray[siteindex].label));
+	
+				// Get current site
+				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
+				var site = Firebug.FireFile.db.grab(id, "sites");
+	
+                var result = PromptService.confirm(null, Firebug.FireFile.__("DeleteSite"), Firebug.FireFile.__("ReallyDeleteSite", site.label));
                 if(result === true) {
 	
-                    // DELETE SITE
-                    Firebug.FireFile.sitesArray.splice(siteindex, 1);
-                    Firebug.FireFile.saveSitesArray();
+                    // Delete site
+					Firebug.FireFile.db.delete(site, "sites");
                     
-                    // DELETE CHANGES
+                    // Delete changes
                     for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
-                        if(Firebug.FireFile.getHrefInAllowedSites(Firebug.FireFile.modifiedStylesheets[i].href) === false) {
+                        if(Firebug.FireFile.getSiteByHref(Firebug.FireFile.modifiedStylesheets[i].href) === false) {
                             Firebug.FireFile.modifiedStylesheets.splice(i, 1);
                         }
                     }
                     
+					// Update panel
                     FirebugContext.getPanel("firefile").select();
                 }
             }

@@ -150,6 +150,35 @@ FBL.ns(function() { with(FBL) {
 			return this;
 		},
 		
+		delete: function(obj, table) {
+			
+			// Get current table
+			if(table == undefined) {
+				table = this._table;
+			}
+			
+			// Get id
+			if(obj instanceof Object) {
+				obj = obj.id;
+			}
+			
+			if(isNaN(obj)) {
+				throw({error: "Invalid from", obj: obj});
+			}
+						
+			var query = "DELETE FROM "+ table + " WHERE id = " + obj + ";";
+			
+			Firebug.Console.log(query);
+			
+			
+			
+			var statement = this._dbhandle.createStatement(query);
+			statement.execute();
+			this._lastid = this._dbhandle.lastInsertRowID;
+			
+			return this;
+		},
+		
 		from: function(obj) {
 			if(obj instanceof Array) {
 				this._from = obj;
