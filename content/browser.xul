@@ -8,6 +8,8 @@
 	<script type="application/x-javascript" src="chrome://FireFile/content/FirefileCssTests.js"/>
   	<script type="application/x-javascript" src="chrome://FireFile/content/lib/firedb.js"/>
 	<script type="application/x-javascript" src="chrome://FireFile/content/lib/fireforms.js"/>
+	<script type="application/x-javascript" src="chrome://FireFile/content/FirefileDataUtils.js"/>
+	<script type="application/x-javascript" src="chrome://FireFile/content/FirefileFtpClient.js"/>
   <commandset id="mainCommandSet">
     <command id="cmd_FireFileSaveCSS" oncommand="Firebug.FireFile.saveAllChanges()"/>
 	<command id="cmd_FireFileDebugCSS" oncommand="Firebug.FireFile.CssTests.start()"/>

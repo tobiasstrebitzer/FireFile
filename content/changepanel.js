@@ -148,7 +148,10 @@ FBL.ns(function() { with(FBL) {
                         FOR("site", "$sites",
                             H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow FireFileSiteHook", role : 'listitem', siteid: "$site.id", siteurl: "$site.url"},
                                 DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
-                                    "$site.label",
+	                                SPAN({class: "cssFireFilePrefix$site|getSiteType" },
+	                                    "$site|getSiteType"
+	                                ),
+									"$site.label",
                                     SPAN({class: "cssFireFileHostLabel"},
                                         A({href: "$site.url", target: "_blank"}, "$site.host|shortenUrl")
                                     )
@@ -211,6 +214,23 @@ FBL.ns(function() { with(FBL) {
                     return data;
                 }
             },
+			getSiteType: function(site) {
+				if(site.is_ftp) {
+					return "Ftp";
+				}else{
+					return "Script";
+				}
+			},
+			getUrl: function(site) {
+				if(site.is_ftp) {
+					// FTP Site
+					return site.ftp_user + "@" + site.ftp_host + ":" + site.ftp_port + " (" + site.url + ")";
+				}else{
+					// Script Site
+					return this.shortenUrl(site.url);
+				}
+				
+			},
             shortenUrl: function(data) {
 				if(data.substr(-1) != "/") {
 					data = data + "/";
@@ -240,7 +260,7 @@ FBL.ns(function() { with(FBL) {
 				}
 			},
             onEditClick: function(e) {
-	
+
 				// Get current site
 				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");
 				var site = Firebug.FireFile.db.grab(id, "sites");
@@ -304,23 +324,6 @@ FBL.ns(function() { with(FBL) {
 				// Refresh List
                 FirebugContext.getPanel("firefile").select();
 
-                /*
-                var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
-                var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
-                var check = {value: false};
-                var input = {value: Firebug.FireFile.sitesArray[siteindex].label};
-                var result = PromptService.prompt(null, Firebug.FireFile.__("ChangeLabel"), Firebug.FireFile.__("EnterNewLabel"), input, null, check);
-
-                if(result && input.value != "") {
-                    if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
-                        Firebug.FireFile.sitesArray[siteindex].label = input.value;
-                        Firebug.FireFile.saveSitesArray();
-                        FirebugContext.getPanel("firefile").select();
-                    }else{
-                        Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
-                    }
-                }*/
-                
             },
             onAutoSaveClick: function(e) {
 				var id = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteid");

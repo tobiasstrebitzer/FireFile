@@ -243,3 +243,16 @@ div.cssSourceLinkContainer div.error {
 div.ruleCommentLine {
 	color: #004AFF;
 }
+
+span.cssFireFilePrefixScript {
+	display: none;
+}
+
+span.cssFireFilePrefixFtp {
+	text-transform: uppercase;
+	color: #FFFFFF;
+	background: #AAA;
+	-moz-border-radius: 4px;
+	margin: 0px 4px 0px 0px;
+	padding: 0px 4px;
+}
