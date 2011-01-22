@@ -26,10 +26,12 @@ FBL.ns(function() { with(FBL) {
 			
 			// Get Comments before Rules
 			var result;
-			var regexp = /((?:\/\*.+\*\/[\s]*)+)([^{}]+){/g;
+			var regexp = /((?:\/\*[\s\S]+\*\/[\s]*)+)([^{}]+){/g;
 			var commentList = {};
 			while(result = regexp.exec(styleContents)) {
-				commentList[this.powerTrim(result[2])] = this.powerTrim(result[1]);
+			    var comment = result[1];
+			    comment = comment.split(" ").join('\u00A0');
+				commentList[this.powerTrim(result[2])] = comment;
 			}
 			this.commentMap[styleSheet.href] = commentList;
 			
@@ -47,7 +49,7 @@ FBL.ns(function() { with(FBL) {
 		    
 			// Get Comments before Properties
 			var result;
-			var regexp = /([^{}\/]+)\s*{([^}]+\/\*.*\*\/[^}]+)}/g;
+			var regexp = /([^{}\/]+)\s*{([^}]+\/\*[\s\S]+\*\/[^}]+)}/g;
 			var propertyCommentList = {};
 			while(result = regexp.exec(styleContents)) {
 			    var selector = this.powerTrim(result[1]);
@@ -137,8 +139,6 @@ FBL.ns(function() { with(FBL) {
 			
 			// Load Comment Array
 			var propertyCommentMap = this.getPropertyCommentsWithSelector(styleSheet, object);
-			
-
 			
 			// Deliver Comments
 			if(propertyCommentMap != undefined) {
