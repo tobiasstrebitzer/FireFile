@@ -204,6 +204,6 @@ div.cssSourceLinkContainer div.error {
     background: url(chrome://FireFile/skin/firefile_save_error.png) !important;
 }
 
-div.ruleCommentLine {
+div.ruleCommentLine, div.propComment span {
 	color: #004AFF;
 }

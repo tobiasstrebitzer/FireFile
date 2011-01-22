@@ -60,7 +60,21 @@ FBL.ns(function() { with(FBL) {
 				return result.split("\n");
 			}
             return [];
-        }
+        },
+        getPropertyTextComments: function(object) {
+			if(!Firebug.FireFile.prefs.display_comments) { 
+				return [];
+			}
+			
+			// For now, return empty array
+			return [];
+
+			var result = Firebug.FireFile.CssTransformer.getPropertyCommentsForRule(object);
+			if(result !== false) {
+				return result;
+			}
+            return [];
+        } 
     };
 
     var CSSPropTag = domplate(CSSDomplateBase, {
@@ -72,6 +86,12 @@ FBL.ns(function() { with(FBL) {
             SPAN({"class": "cssColon"}, ":"),
             SPAN({"class": "cssPropValue", $editable: "$rule|isEditable"}, "$prop.value$prop.important"),
             SPAN({"class": "cssSemi"}, ";")
+        )
+    });
+    
+    var CSSPropCommentTag = domplate(CSSDomplateBase, {
+        tag: DIV({"class": "cssProp focusRow propComment"},
+			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;/* $comment */")
         )
     });
 
@@ -101,6 +121,9 @@ FBL.ns(function() { with(FBL) {
             ),
             DIV({role : 'group'},
                 DIV({"class" : "cssPropertyListBox", _rule: "$rule", role : 'listbox'},
+    	            FOR("comment", "$rule|getPropertyTextComments",
+    	                TAG(CSSPropCommentTag.tag, {rule: "$rule", comment: "$comment"})
+    	            ),
                     FOR("prop", "$rule.props",
                         TAG(CSSPropTag.tag, {rule: "$rule", prop: "$prop"})
                     )
@@ -308,8 +331,6 @@ FBL.ns(function() { with(FBL) {
 			
 			}catch(ex) {
 				Firebug.Console.log(ex);
-				
-				
 			}
 		},
 		showContext: function(browser, context) {
@@ -910,7 +931,8 @@ FBL.ns(function() { with(FBL) {
 
 			// SETUP TRANSFER
 			xmlhttp.onreadystatechange = function(e) {
-				var xmlhttp = e.currentTarget;				
+				var xmlhttp = e.currentTarget;
+				
 				// DEBUG
 				try{
 				    if(Firebug.FireFile.prefs.enable_debug_mode) {
@@ -972,7 +994,8 @@ FBL.ns(function() { with(FBL) {
             }
             
             // START TRANSFER
-            xmlhttp.send(filetype + "=" + window.btoa(contents) + "&file=" + window.btoa(href) + "&action=save&code=" + site.hash + "&index="+index);
+            xmlhttp.send(filetype + "=" + Firebug.FireFile.encodeData(contents) + "&file=" + Firebug.FireFile.encodeData(href) + "&action=save&code=" + site.hash + "&index="+index);
+            
             
 		    if(Firebug.FireFile.prefs.enable_debug_mode) {
 		        Firebug.Console.log("params:");
@@ -982,7 +1005,7 @@ FBL.ns(function() { with(FBL) {
 		            href: href
 		        });
 		        Firebug.Console.log("request:");
-		        Firebug.Console.log(filetype + "=" + window.btoa(contents) + "&file=" + window.btoa(href) + "&action=save&code=" + site.hash + "&index="+index);
+		        Firebug.Console.log(filetype + "=" + Firebug.FireFile.encodeData(contents) + "&file=" + Firebug.FireFile.encodeData(href) + "&action=save&code=" + site.hash + "&index="+index);
 		    }
             
             return true;
@@ -1123,6 +1146,10 @@ FBL.ns(function() { with(FBL) {
             if(callback != undefined) {
                 callback.call(this);
             }
+        },
+        encodeData: function(str) {
+            str = (window.btoa(str)+'').toString();
+            return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
         }
     });
 

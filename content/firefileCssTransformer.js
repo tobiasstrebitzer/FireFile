@@ -4,6 +4,7 @@ FBL.ns(function() { with(FBL) {
 	Firebug.FireFile.CssTransformer = extend(Firebug.Module, {
 		
 		commentMap: [],
+		propertyCommentMap: [],
 		
 		css3CompatibilityList: {
 			"-moz-border-radius": ["border-radius", "-webkit-border-radius", "-khtml-border-radius"],
@@ -23,17 +24,78 @@ FBL.ns(function() { with(FBL) {
 			
 			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
 			
+			// Get Comments before Rules
 			var result;
-			var regexp = /(\/\*[^*]+\*\/)[\s]*([^{]+){/g;
+			var regexp = /((?:\/\*.+\*\/[\s]*)+)([^{}]+){/g;
 			var commentList = {};
 			while(result = regexp.exec(styleContents)) {
 				commentList[this.powerTrim(result[2])] = this.powerTrim(result[1]);
 			}
-			
 			this.commentMap[styleSheet.href] = commentList;
 			
-			
 			return commentList;
+		},
+		
+		getPropertyCommentsWithSelector: function(styleSheet, object) {
+		    
+			// Load Comments from Cache
+			if(this.propertyCommentMap[styleSheet.href] != undefined) {
+				return this.propertyCommentMap[styleSheet.href];
+			}
+			
+			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
+		    
+			// Get Comments before Properties
+			var result;
+			var regexp = /([^{}\/]+)\s*{([^}]+\/\*.*\*\/[^}]+)}/g;
+			var propertyCommentList = {};
+			while(result = regexp.exec(styleContents)) {
+			    var selector = this.powerTrim(result[1]);
+				propertyCommentList[selector] = this.getPropertyComments(result[2], object);
+			}
+			
+			this.propertyCommentMap[styleSheet.href] = propertyCommentList;
+		},
+		
+		getPropertyComments: function(str, object) {
+			var retVal = [];
+			var regexp = /\/\*(.+)\*\//g;
+			while(result = regexp.exec(str)) {
+			    var comment = result[1];
+			    
+			    // For now, only add comment
+			    retVal.push(comment);
+			    continue;
+			    
+			    // Check if comment is convertable
+			    var convregexp = /^([^:]+):\s*([^;]+)(\!important)*;$/;
+			    if(convresult = convregexp.exec(comment)) {
+			        // Todo: solve !important declarations
+			        var important = "";
+			        if(convresult[3] != undefined) {
+			           important = convresult[3]; 
+			        }
+                    
+                    // Loop through rules
+                    Firebug.Console.log("object");
+                    Firebug.Console.log(object);
+                    
+                    // Push to rule properties
+			        object.props.push({
+			            name: convresult[1],
+			            value: convresult[2],
+			            wasInherited: false,
+			            overridden: false,
+			            disabled: true,
+			            important: important
+			        });
+			        
+			    }else{
+			        retVal.push(comment);
+			    }
+			}
+			Firebug.Console.log(retVal);
+			return retVal;
 		},
 		
 		powerTrim: function(str) {
@@ -48,7 +110,7 @@ FBL.ns(function() { with(FBL) {
 		},
 		
 		getCommentForRule: function(rule) {
-			
+		    
 			// Get Stylesheet
 			var styleSheet = rule.parentStyleSheet;
 			if(!styleSheet) { return false; }
@@ -56,10 +118,33 @@ FBL.ns(function() { with(FBL) {
 			// Load Comment Array
 			var commentMap = this.getCommentsWithSelector(styleSheet);
 			
+			// Deliver Comments
 			if(commentMap != undefined) {				
 				var index = this.powerTrim(rule.selectorText);				
 				if(commentMap[index] != undefined) {
 					return commentMap[index];
+				}
+			}
+						
+			return false;
+		},
+		
+		getPropertyCommentsForRule: function(object) {
+			
+			// Get Stylesheet
+			var styleSheet = object.rule.parentStyleSheet;
+			if(!styleSheet) { return false; }
+			
+			// Load Comment Array
+			var propertyCommentMap = this.getPropertyCommentsWithSelector(styleSheet, object);
+			
+
+			
+			// Deliver Comments
+			if(propertyCommentMap != undefined) {
+				var index = this.powerTrim(object.rule.selectorText);
+				if(propertyCommentMap[index] != undefined) {
+					return propertyCommentMap[index];
 				}
 			}
 						
@@ -80,6 +165,7 @@ FBL.ns(function() { with(FBL) {
 			// Get Comments Map
 			if(Firebug.FireFile.prefs.display_comments && !compress) {
 				var commentMap = this.getCommentsWithSelector(styleSheet);
+				// TODO: GENERATE PROPERTY COMMENTS
 			}
 
 			// Loop through Rules
