@@ -13,6 +13,9 @@ Download the latest version from github (Download- Button) in ".zip" file format
 
 ## Version History
 
+* 0.8.7 (15.04.2011)
+** Added compatibility for Firefox 4.0
+
 * 0.8.6 (16.12.2010)
 ** feature: Added possibility to cancel changes in FireFile registered sites list (via "cancel" icon)
 ** feature: Added context menu option to cancel all changes made
