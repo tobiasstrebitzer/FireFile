@@ -22,7 +22,7 @@ FBL.ns(function() { with(FBL) {
 				return this.commentMap[styleSheet.href];
 			}
 			
-			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
+			var styleContents = this.getStyleSheetContents(styleSheet, Firebug.currentContext);
 			
 			// Get Comments before Rules
 			var result;
@@ -45,7 +45,7 @@ FBL.ns(function() { with(FBL) {
 				return this.propertyCommentMap[styleSheet.href];
 			}
 			
-			var styleContents = this.getStyleSheetContents(styleSheet, FirebugContext);
+			var styleContents = this.getStyleSheetContents(styleSheet, Firebug.currentContext);
 		    
 			// Get Comments before Properties
 			var result;
