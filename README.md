@@ -1,5 +1,4 @@
-## [xpi updated for firebug 1.8](https://github.com/downloads/nightwing/FireFile/FireFile.xpi)
-
+## [Install FireFile from your Browser (Firefox)](https://github.com/downloads/tobiasstrebitzer/FireFile/FireFile.xpi)
 
 ## FireFile Firebug Extension
 
@@ -15,6 +14,9 @@ Download the latest version from github (Download- Button) in ".zip" file format
 * Remote saving css changes
 
 ## Version History
+
+* 0.8.8 (30.08.2011)
+** Added compatibility for Firefox 6.0 (Firebug 1.8) - thanks to nightwing@github
 
 * 0.8.7 (15.04.2011)
 ** Added compatibility for Firefox 4.0
