@@ -18,7 +18,7 @@
 		<key id="key_debug" key="d" command="cmd_FireFileDebugCSS" modifiers="control,shift"/>
   </keyset>
   <statusbar id="status-bar">
-    <statusbarpanel id="firefile-status" status="Loaded" onclick="var browser = FirebugChrome.getCurrentBrowser();if (!FirebugContext || !browser.showFirebug) {var created = TabWatcher.watchBrowser(browser);}if (Firebug.isMinimized()) {Firebug.unMinimize();}Firebug.FireFile.clickStatus();">
+    <statusbarpanel id="firefile-status" status="Loaded" onclick="var browser = gBrowser.mCurrentBrowser;if (!Firebug.currentContext || !browser.showFirebug) {var created = TabWatcher.watchBrowser(browser);}if (Firebug.isMinimized()) {Firebug.unMinimize();}Firebug.FireFile.clickStatus();">
       <image tooltiptext="&firefile.Statuslabel;" id="firefile-status-image" src="chrome://FireFile/skin/status_disabled.png"/>
     </statusbarpanel>
   </statusbar>
