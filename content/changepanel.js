@@ -100,7 +100,7 @@ FBL.ns(function() { with(FBL) {
 			Firebug.FireFile.resetStylesheet(href);
 			
 			// Reload Panel
-			FirebugContext.getPanel("firefile").select();
+			Firebug.currentContext.getPanel("firefile").select();
         }
     });
 
@@ -196,7 +196,7 @@ FBL.ns(function() { with(FBL) {
                     if(!input.value.match(/[^a-zA-Z0-9-_\s\.\/]+/) && input.value.length <= 40) {
                         Firebug.FireFile.sitesArray[siteindex].label = input.value;
                         Firebug.FireFile.saveSitesArray();
-                        FirebugContext.getPanel("firefile").select();
+                        Firebug.currentContext.getPanel("firefile").select();
                     }else{
                         Firebug.FireFile.updateNotify("fferror", 8, 1, "LabelError", true);
                     }
@@ -208,7 +208,7 @@ FBL.ns(function() { with(FBL) {
                 var siteindex = Firebug.FireFile.getSiteIndexByUrl(siteurl);
                 Firebug.FireFile.sitesArray[siteindex].autosave = !Firebug.FireFile.sitesArray[siteindex].autosave;
                 Firebug.FireFile.saveSitesArray();
-                FirebugContext.getPanel("firefile").select();
+                Firebug.currentContext.getPanel("firefile").select();
             },
             onDeleteClick: function(e) {
                 var siteurl = getAncestorByClass(e.target, "FireFileSiteHook").getAttribute("siteurl");
@@ -227,7 +227,7 @@ FBL.ns(function() { with(FBL) {
                         }
                     }
                     
-                    FirebugContext.getPanel("firefile").select();
+                    Firebug.currentContext.getPanel("firefile").select();
                 }
             }
         }),

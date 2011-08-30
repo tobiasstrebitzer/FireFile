@@ -1,3 +1,6 @@
+## [xpi updated for firebug 1.8](https://github.com/downloads/nightwing/FireFile/FireFile.xpi)
+
+
 ## FireFile Firebug Extension
 
 Firefile is a Firebug extension that allows you to save the CSS files edited with firebug live to your web server by transfering it to a server- side script, which then handles css saving.

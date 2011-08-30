@@ -309,12 +309,12 @@ FBL.ns(function() { with(FBL) {
 				Firebug.FireFile.resetStylesheet(href);
 
 				// Reload Panel
-				FirebugContext.getPanel("firefile").select();
+				Firebug.currentContext.getPanel("firefile").select();
             }
         },
 		resetStylesheet: function(href) {
 			try{
-			var stylesheets = FirebugContext.window.document.styleSheets;
+			var stylesheets = Firebug.currentContext.window.document.styleSheets;
 			// Loop through all stylesheets
 			for(var i=0;i<stylesheets.length;i++) {
 				if(stylesheets[i].href == href) {
@@ -346,8 +346,8 @@ FBL.ns(function() { with(FBL) {
 				this.disableFireFile();
 									
                 // CHECK FOR FIREFILE PAGE
- 				var site_script = FirebugContext.name;
-                var keyholder = FirebugContext.global.document.getElementById("firefile-key-holder");
+ 				var site_script = Firebug.currentContext.name;
+                var keyholder = Firebug.currentContext.global.document.getElementById("firefile-key-holder");
 				
                 if (keyholder) {
 	
@@ -364,9 +364,9 @@ FBL.ns(function() { with(FBL) {
                             Firebug.FireFile.setStatus("closed");
                             
                             // OPEN SITES PANEL
-                            top.FirebugChrome.selectPanel("html");
-                            top.FirebugChrome.selectSidePanel("firefile");
-                            FirebugContext.getPanel("firefile").select();
+                            top.Firebug.chrome.selectPanel("html");
+                            top.Firebug.chrome.selectSidePanel("firefile");
+                            Firebug.currentContext.getPanel("firefile").select();
                         }
                     }
                 }
@@ -406,8 +406,8 @@ FBL.ns(function() { with(FBL) {
             Firebug.Inspector.startInspecting = function() {
                 Firebug.FireFile.origInspector.apply(this, arguments);
                 if(Firebug.FireFile.prefs.inspector_switch_css) { 
-                    top.FirebugChrome.selectPanel("html");
-                    top.FirebugChrome.selectSidePanel("css");
+                    top.Firebug.chrome.selectPanel("html");
+                    top.Firebug.chrome.selectSidePanel("css");
                 }
             }
             
@@ -416,8 +416,8 @@ FBL.ns(function() { with(FBL) {
             Firebug.Inspector.inspectFromContextMenu = function() {
                 Firebug.FireFile.origContextInspector.apply(this, arguments);
                 if(Firebug.FireFile.prefs.inspector_switch_css) { 
-                    top.FirebugChrome.selectPanel("html");
-                    top.FirebugChrome.selectSidePanel("css");
+                    top.Firebug.chrome.selectPanel("html");
+                    top.Firebug.chrome.selectSidePanel("css");
                 }
             };
 
@@ -433,7 +433,7 @@ FBL.ns(function() { with(FBL) {
             return newCss;
         },
         getActiveWindow: function() {
-            return FirebugChrome.getCurrentBrowser()._contentWindow;
+            return Firebug.chrome.getCurrentBrowser()._contentWindow;
         },
 		hasPrefSitesWithUri: function(prePath) {
 			// SHORTER WAY
@@ -507,8 +507,9 @@ FBL.ns(function() { with(FBL) {
             
             if(force != undefined) {
                 this.updateCssPanelIcon();
-                FirebugContext.getPanel("css").updateSelection(FirebugContext.getPanel("css").selection);
-                FirebugContext.getPanel("firefile").select();
+				var cssPanel = Firebug.currentContext.getPanel("css");
+                cssPanel.updateSelection(cssPanel.selection);
+                Firebug.currentContext.getPanel("firefile").select();
                 return;
             }
             
@@ -519,16 +520,19 @@ FBL.ns(function() { with(FBL) {
                     break;
                 case "html":
                     if(sidePanel.name == "css") {
-                        FirebugContext.getPanel("css").updateSelection(FirebugContext.getPanel("css").selection);
+						var cssPanel = Firebug.currentContext.getPanel("css");
+						cssPanel.updateSelection(cssPanel.selection);
+						Firebug.currentContext.getPanel("firefile").select();
                     }else if(sidePanel.name == "firefile") {
-                        FirebugContext.getPanel("firefile").select();
+                        Firebug.currentContext.getPanel("firefile").select();
                     }
                     break;
             }
         },
         updateCssPanelIcon: function() {
-            if(FirebugContext.getPanel('stylesheet').location != undefined) {
-                var href = FirebugContext.getPanel('stylesheet').location.href;
+			var stylePanel = Firebug.currentContext.getPanel('stylesheet')
+            if(stylePanel.location != undefined) {
+                var href = stylePanel.location.href;
                 if(this.styleSheetExists(href)) {
                     removeClass($("ffCssPanelSaveButton"), "disabled");
                     removeClass($("ffCssPanelSaveButton"), "error");
@@ -544,7 +548,7 @@ FBL.ns(function() { with(FBL) {
             }
         },
         saveCurrentStylesheet: function() {
-            var href = FirebugContext.getPanel('stylesheet').location.href;
+            var href = Firebug.currentContext.getPanel('stylesheet').location.href;
             if(this.styleSheetExists(href)) {
                 this.saveIconClicked(href);
             }
@@ -579,13 +583,13 @@ FBL.ns(function() { with(FBL) {
                 var result = HtmlCssContextOrig.apply(this, arguments);
                 
                 // GET NODES AND TAGS
-                var node = FirebugContext.getPanel("html").selection;
+                var node = Firebug.currentContext.getPanel("html").selection;
                 var tag = node.tagName.toLowerCase();
                 var id = node.getAttribute("id");
                 var cssclass = node.getAttribute("class");
 
                 if(arguments[0] == undefined) {
-                    var styleSheet = FirebugContext.getPanel("stylesheet").selected;
+                    var styleSheet = Firebug.currentContext.getPanel("stylesheet").selected;
                     var target = styleSheet.cssRules[0];
                     var insertIndex = 0;
                 }else{
@@ -607,7 +611,7 @@ FBL.ns(function() { with(FBL) {
                     nol10n: true,
                     command: function() {
                         Firebug.CSSModule.insertRule(styleSheet, tag + "{}", insertIndex);
-                        FirebugContext.getPanel("css").updateCascadeView(node);
+                        Firebug.currentContext.getPanel("css").updateCascadeView(node);
                     }
                 });
                 
@@ -619,7 +623,7 @@ FBL.ns(function() { with(FBL) {
                         nol10n: true,
                         command: function() {
                             Firebug.CSSModule.insertRule(styleSheet, styledef + "{}", insertIndex);
-                            FirebugContext.getPanel("css").updateCascadeView(node);
+                            Firebug.currentContext.getPanel("css").updateCascadeView(node);
                         }
                     });
                 }
@@ -633,7 +637,7 @@ FBL.ns(function() { with(FBL) {
                             nol10n: true,
                             command: function(e) {
                                 Firebug.CSSModule.insertRule(styleSheet, this.label.substr(1) + "{}", insertIndex);
-                                FirebugContext.getPanel("css").updateCascadeView(node);
+                                Firebug.currentContext.getPanel("css").updateCascadeView(node);
                             }
                         });
                     } 
@@ -644,7 +648,7 @@ FBL.ns(function() { with(FBL) {
 					nol10n: true,
 					command: function() {
 						Firebug.CSSModule.insertRule(styleSheet,window.prompt('Please enter custom selector :',tag ) + "{}" , insertIndex);
-						FirebugContext.getPanel("css").updateCascadeView(node);
+						Firebug.currentContext.getPanel("css").updateCascadeView(node);
 					}
 				});
 
@@ -706,7 +710,7 @@ FBL.ns(function() { with(FBL) {
                 if(Firebug.FireFile.cssTimer) {
                     // RESTART TIMEOUT
                     clearTimeout(Firebug.FireFile.cssTimer);
-                    Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
+                    Firebug.FireFile.cssTimer = Firebug.currentContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
                 }
                        
                 // CHECK IF VALUE WAS CHANGED
@@ -735,7 +739,7 @@ FBL.ns(function() { with(FBL) {
                                         Firebug.FireFile.styleSheetStatus[styleSheet.href] = "autosave";
                                         
                                         // START NEW TIMEOUT
-                                        Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
+                                        Firebug.FireFile.cssTimer = Firebug.currentContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
                                     }
                                 }
                             }
@@ -752,7 +756,7 @@ FBL.ns(function() { with(FBL) {
         autoSaveTimer: function() {
             if(Firebug.FireFile.cssEditing) {
                 // STOP OLD TIMEOUT
-                Firebug.FireFile.cssTimer = FirebugContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
+                Firebug.FireFile.cssTimer = Firebug.currentContext.setTimeout(function () { Firebug.FireFile.autoSaveTimer() }, 3000);
             }else{
                 // SAVE UNSAVED CHANGES
                 for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
@@ -791,9 +795,9 @@ FBL.ns(function() { with(FBL) {
         clickStatus: function() {
 
             // OPEN SITES PANEL
-            top.FirebugChrome.selectPanel("html");
-            top.FirebugChrome.selectSidePanel("firefile");
-            FirebugContext.getPanel("firefile").select();
+            top.Firebug.chrome.selectPanel("html");
+            top.Firebug.chrome.selectSidePanel("firefile");
+            Firebug.currentContext.getPanel("firefile").select();
         },
         __: function(msg) {
             try{
@@ -1013,7 +1017,7 @@ FBL.ns(function() { with(FBL) {
         },
         generateHTMLContents: function() {
             // GET DOM DOCUMENT
-            var doc = FirebugChrome.getCurrentBrowser()._contentWindow.document;
+            var doc = Firebug.chrome.getCurrentBrowser()._contentWindow.document;
             var retVal = "";
             
             // GENERATE DOCTYPE
