@@ -3,3 +3,4 @@ skin    FireFile	classic/1.0 skin/
 locale  FireFile    en-US   locale/en-US/
 locale  FireFile    de-DE   locale/de-DE/
 overlay chrome://firebug/content/firebugOverlay.xul chrome://FireFile/content/browser.xul
+overlay chrome://browser/content/browser.xul chrome://FireFile/content/browserStatus.xul

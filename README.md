@@ -15,6 +15,13 @@ Download the latest version from github (Download- Button) in ".zip" file format
 
 ## Version History
 
+* 0.9.0 (14.01.2012)
+** Added compatibility for Firefox 9.0.1 (Firebug 1.9.0)
+** Added support for all style rule types (@fontface, @media, etc)
+** Improved comment display and comment saving
+** Improved css beautification
+** Removed feature: css3 autoconversion to other browsers (scheduled for later release)
+
 * 0.8.8 (30.08.2011)
 ** Added compatibility for Firefox 6.0 (Firebug 1.8) - thanks to nightwing@github
 
