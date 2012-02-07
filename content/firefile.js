@@ -582,22 +582,21 @@ FBL.ns(function() { with(FBL) {
 
                 // PRE
                 var result = HtmlCssContextOrig.apply(this, arguments);
-
+                if(arguments[0] == undefined)
+                    return result;
+                var target = arguments[0];
+                if(target.parentStyleSheet == undefined)
+                    return result;
+                
                 // GET NODES AND TAGS
                 var node = Firebug.currentContext.getPanel("html").selection;
                 var tag = node.tagName.toLowerCase();
                 var id = node.getAttribute("id");
                 var cssclass = node.getAttribute("class");
 
-                if(arguments[0] == undefined) {
-                    var styleSheet = Firebug.currentContext.getPanel("stylesheet").selected;
-                    var target = styleSheet.cssRules[0];
-                    var insertIndex = 0;
-                }else{
-                    var target = arguments[0];
-                    var styleSheet = target.parentStyleSheet
-                    for(var insertIndex=0;insertIndex<styleSheet.cssRules.length && target != styleSheet.cssRules[insertIndex]; insertIndex++) {}
-                }
+                var styleSheet = target.parentStyleSheet;
+
+                for(var insertIndex=0;insertIndex<styleSheet.cssRules.length && target != styleSheet.cssRules[insertIndex]; insertIndex++) {}
 
                 // HEADER
                 var stylesheetName = styleSheet.href.split("/").pop().split("?").shift();
