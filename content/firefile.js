@@ -44,11 +44,22 @@ FBL.ns(function() { with(FBL) {
     var CSSDomplateBase = {
         isEditable: function(rule)
         {
-            return !rule.isSystemSheet;
+            return !rule.isSystemSheet && !rule.isNotEditable;
         },
         isSelectorEditable: function(rule)
         {
             return rule.isSelectorEditable && this.isEditable(rule);
+        },
+        getPropertyValue: function(prop)
+        {
+            // Disabled, see http://code.google.com/p/fbug/issues/detail?id=5880
+            /*
+            var limit = Options.get("stringCropLength");
+            */
+            var limit = 0;
+            if (limit > 0)
+                return Str.cropString(prop.value, limit);
+            return prop.value;
         },
         getComments: function(object) {
 			if(!Firebug.FireFile.prefs.display_comments) {
@@ -79,12 +90,21 @@ FBL.ns(function() { with(FBL) {
 
     var CSSPropTag = domplate(CSSDomplateBase, {
         tag: DIV({"class": "cssProp focusRow", $disabledStyle: "$prop.disabled",
-              $editGroup: "$rule|isEditable",
-              $cssOverridden: "$prop.overridden", role : "option"},
-			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;"), // Use spaces for indent so, copy to clipboard is nice.
-            SPAN({"class": "cssPropName", $editable: "$rule|isEditable"}, "$prop.name"),
-            SPAN({"class": "cssColon"}, ":"),
-            SPAN({"class": "cssPropValue", $editable: "$rule|isEditable"}, "$prop.value$prop.important"),
+            $editGroup: "$rule|isEditable",
+            $cssOverridden: "$prop.overridden", 
+            role: "option"},
+            
+            // Use spaces for indent to make "copy to clipboard" nice.
+			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;"),
+            SPAN({"class": "cssPropName", $editable: "$rule|isEditable"}, 
+                "$prop.name"
+            ),
+            
+            // Use a space here, so that "copy to clipboard" has it (issue 3266).
+            SPAN({"class": "cssColon"}, ":&nbsp;"),
+            SPAN({"class": "cssPropValue", $editable: "$rule|isEditable",
+                _repObject: "$prop.value$prop.important"}, "$prop|getPropertyValue$prop.important"
+            ),
             SPAN({"class": "cssSemi"}, ";")
         )
     });
@@ -105,19 +125,24 @@ FBL.ns(function() { with(FBL) {
         )
     });
 
-    var CSSStyleRuleTag = domplate(CSSDomplateBase, {
-        tag: DIV({"class": "cssRule insertInto",
+    var CSSStyleRuleTag = domplate(CSSDomplateBase, 
+    {
+        tag: 
+            DIV({"class": "cssRule insertInto",
                 $cssEditableRule: "$rule|isEditable",
+                $insertInto: "$rule|isEditable",
                 $editGroup: "$rule|isSelectorEditable",
                 _repObject: "$rule.rule",
-                "ruleId": "$rule.id", role : 'presentation'},
-			DIV({"class": "ruleComment", title: "Comment"},
-	            FOR("comment", "$rule|getComments",
-	            	DIV({"class": "ruleCommentLine"}, "$comment")
-	            )
-		  	),
-            DIV({"class": "cssHead focusRow", role : 'listitem'},
-                SPAN({"class": "cssSelector", $editable: "$rule|isSelectorEditable"}, "$rule.selector"), " {"
+                role: "presentation"},
+                DIV({"class": "ruleComment", title: "Comment"},
+                    FOR("comment", "$rule|getComments",
+                	    DIV({"class": "ruleCommentLine"}, "$comment")
+                    )
+                ),
+                DIV({"class": "cssHead focusRow", role : 'listitem'},
+                    SPAN({"class": "cssSelector", $editable: "$rule|isSelectorEditable"}, 
+                        "$rule.selector"), 
+                        " {"
             ),
             DIV({role : 'group'},
                 DIV({"class" : "cssPropertyListBox", _rule: "$rule", role : 'listbox'},
@@ -129,26 +154,29 @@ FBL.ns(function() { with(FBL) {
                     )
                 )
             ),
-            DIV({"class": "editable insertBefore", role:"presentation"}, "}")
+            DIV({$editable: "$rule|isEditable", $insertBefore: "$rule|isEditable",
+                role:"presentation"},
+                "}"
+            )
         )
     });
 
     var FireFileStyleDomPlate = domplate({
         cascadedTag:
-            DIV({"class": "a11yCSSView",  role: 'presentation'},
-                DIV({role: 'list', 'aria-label' : $STR('aria.labels.style rules') },
+            DIV({"class": "a11yCSSView", role: 'presentation'},
+                DIV({"class": "cssNonInherited", role: "list",
+                        "aria-label" : $STR("aria.labels.style rules") },
                     FOR("rule", "$rules",
                         TAG("$ruleTag", {rule: "$rule"})
                     )
                 ),
                 DIV({role: "list", 'aria-label' :$STR('aria.labels.inherited style rules')},
                     FOR("section", "$inherited",
-
                         H1({"class": "cssInheritHeader groupHeader focusRow", role: 'listitem' },
                             SPAN({"class": "cssInheritLabel"}, "$inheritLabel"),
                             TAG(FirebugReps.Element.shortTag, {object: "$section.element"})
                         ),
-                        DIV({role : 'group'},
+                        DIV({role: "group"},
                             FOR("rule", "$section.rules",
                                 TAG("$ruleTag", {rule: "$rule"})
                             )
@@ -158,13 +186,52 @@ FBL.ns(function() { with(FBL) {
             ),
 
         ruleTag:
-          DIV({"class": "cssElementRuleContainer"},
-              TAG(CSSStyleRuleTag.tag, {rule: "$rule"}),
-			  DIV({class: "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
-                  DIV({class: "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
-				  TAG(FirebugReps.SourceLink.tag, {object: "$rule.sourceLink"})
+            DIV({"class": "cssElementRuleContainer"},
+                TAG(CSSStyleRuleTag.tag, {rule: "$rule"}),
+			    DIV({"class": "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
+                    DIV({"class": "$rule|isTouched", onclick: "$saveChange", title: $STR("ClickToSaveChanges", "strings_firefile")}),
+				    TAG(FirebugReps.SourceLink.tag, {object: "$rule.sourceLink"})
               )
           ),
+          
+        newRuleTag:
+            DIV({"class": "cssElementRuleContainer"},
+                DIV({"class": "cssRule insertBefore", style: "display: none"}, "")
+            ),
+            
+        CSSFontPropValueTag:
+            SPAN({"class": "cssFontPropValue"},
+                FOR("part", "$propValueParts",
+                    SPAN({"class": "$part.type|getClass", _repObject: "$part.font"}, "$part.value"),
+                    SPAN({"class": "cssFontPropSeparator"}, "$part|getSeparator")
+                )
+            ),
+        getSeparator: function(part)
+        {
+            if (part.lastFont || part.type == "important")
+                return "";
+
+            if (part.type == "otherProps")
+                return " ";
+
+            return ",";
+        },
+
+        getClass: function(type)
+        {
+            switch (type)
+            {
+                case "used":
+                    return "cssPropValueUsed";
+
+                case "unused":
+                    return "cssPropValueUnused";
+
+                default:
+                    return "";
+            }
+        },
+        
         getHref: function(rule) {
             try{
                 return rule.rule.parentStyleSheet.href;
@@ -346,12 +413,7 @@ FBL.ns(function() { with(FBL) {
                 // CHECK FOR FIREFILE PAGE
  				var site_script = Firebug.currentContext.name;
                 var keyholder = Firebug.currentContext.global.document.getElementById("firefile-key-holder");
-
-
-
-
                 if (keyholder) {
-
                     if (this.styleSheetIndexByHref(site_script) === false) {
                         var result = PromptService.confirm(null, Firebug.FireFile.__("AddToFireFile"), Firebug.FireFile.__("DoYouWantToAddTheSite", this.getHostFromHref(site_script)));
                         if(result === true) {
@@ -390,10 +452,16 @@ FBL.ns(function() { with(FBL) {
             }
         },
         initialize: function() {
-
+            
+            // Load libraries
+            Firebug.require(["firebug/lib/dom"], function(Dom) {
+                alert("works");
+            });
+            
 			// Setup System Hooks
             this.hookIntoHtmlContext();
             this.hookIntoCSSPanel();
+            
             this.modifiedStylesheets = new Array();
             this.styleSheetStatus = new Array();
 
@@ -718,7 +786,14 @@ FBL.ns(function() { with(FBL) {
                 if (value != null && value != Firebug.FireFile.cssPreviousValue) {
 
                     // GET STYLESHEET
-                    var styleRule = Firebug.getRepObject(target);
+                    console.log(Firebug);
+                    
+                    var cssRule = Dom.getAncestorByClass(target, "cssRule");
+                    var styleRule = Firebug.getRepObject(cssRule);
+                    // var styleRule = Firebug.getRepObject(target);
+                    Firebug.Console.log(target);
+                    Firebug.Console.log(styleRule);
+                    
                     if(styleRule != undefined) {
 
                         while(styleRule.parentRule != undefined) {
