@@ -1,0 +1,28 @@
+<!-- FIREFILE STATUS BAR -->
+<!ENTITY firefile.Statuslabel "FireFile anzeigen">
+
+<!-- FIREFILE WINDOW -->
+<!ENTITY firefile.options.title "FireFile Einstellungen">
+
+<!-- FIREFILE CHANGES TAB -->
+<!ENTITY firefile.options.changes "Aktualisierungen">
+<!ENTITY firefile.options.saveall "Alle hochladen">
+<!ENTITY firefile.options.cancelall "Alle abbrechen">
+
+<!-- FIREFILE SITES TAB -->
+<!ENTITY firefile.options.sites "Registrierte Seiten">
+<!ENTITY firefile.options.site "Seite">
+<!ENTITY firefile.options.code "Schlüssel">
+
+<!-- FIREFILE INSTRUCTIONS TAB -->
+<!ENTITY firefile.options.instructions "Hilfe anzeigen">
+
+<!-- FIREFILE HTMLPREVIEW DIALOG -->
+<!ENTITY firefile.htmlpreview.title "HTML hochladen">
+<!ENTITY firefile.htmlpreview.heading "Achtung!">
+<!ENTITY firefile.htmlpreview.description "Der HTML Code wurde von ihrem Browser interpretiert und dadurch verändert. Dies kann zu ungewünschen Ergebnissen führen. Bitte legen Sie zuvor eine Sicherheitskopie an.">
+<!ENTITY firefile.htmlpreview.preview "Vorschau">
+<!ENTITY firefile.htmlpreview.accept "Speichern">
+<!ENTITY firefile.htmlpreview.cancel "Abbrechen">
+
+<!ENTITY firefile.ClickToSaveChanges "Klicken Sie hier, um Änderungen in der CSS- Datei zu speichern">

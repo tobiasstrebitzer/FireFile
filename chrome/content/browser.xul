@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<!DOCTYPE window SYSTEM "chrome://FireFile/locale/firefile.dtd">
+<?xml-stylesheet href="chrome://FireFile/content/firefile.css" type="text/css"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/x-javascript" src="chrome://FireFile/content/browser.js"/>
+  <!--
+  <script type="application/x-javascript" src="chrome://FireFile/content/firefile.js"/>
+  <script type="application/x-javascript" src="chrome://FireFile/content/changepanel.js"/>
+  <script type="application/x-javascript" src="chrome://FireFile/content/firefileCssTransformer.js"/>
+  <script type="application/x-javascript" src="chrome://FireFile/content/FirefileCssTests.js"/>
+  -->
+  
+  <commandset id="mainCommandSet">
+    <command id="cmd_FireFileSaveCSS" oncommand="Firebug.FireFile.saveAllChanges()"/>
+	<command id="cmd_FireFileDebugCSS" oncommand="Firebug.FireFile.CssTests.start()"/>
+  </commandset>
+  <stringbundleset id="stringbundleset">
+      <stringbundle id="strings_firefile" src="chrome://FireFile/locale/firefile.properties"/>
+  </stringbundleset>
+  <keyset id="mainKeyset">
+        <key id="key_save" key="s" command="cmd_FireFileSaveCSS" modifiers="control,shift"/>
+		<key id="key_debug" key="d" command="cmd_FireFileDebugCSS" modifiers="control,shift"/>
+  </keyset>
+
+  <toolbarpalette id="BrowserToolbarPalette">
+    <toolbarbutton id="firefile-toolbarbutton"
+      class="toolbarbutton-1 chromeclass-toolbar-additional"
+      tooltiptext="&firefile.FireFile;"
+      oncommand="alert('shortcut');"
+      image="chrome://firefile/skin/status_closed.png"
+      type="menu-button">
+        <menupopup>
+          <menuitem id="firefile-toolbar-first"
+                    label="First"
+                    key="firefile-first-key"
+                    oncommand="alert('first');"/>
+          <menuseparator/>
+          <menuitem id="firefile-toolbar-second"
+                    label="Second"
+                    key="firefile-second-key"
+                    oncommand="alert('second');"/>
+       </menupopup>
+     </toolbarbutton>
+  </toolbarpalette>
+
+  <hbox id="fbCSSButtons" collapsed="true">
+      <toolbarseparator class="fbPanelSpecificButtonsSeparator"/>
+      <div id="ffCssPanelSaveButtonContainer">
+        <span id="ffCssPanelSaveButton" tooltiptext="&firefile.ClickToSaveChanges;" class="disabled" onclick="Firebug.FireFile.saveCurrentStylesheet()"></span>
+      </div>
+  </hbox>
+
+</overlay>
