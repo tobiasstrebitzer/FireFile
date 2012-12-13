@@ -15,6 +15,11 @@ Download the latest version from github (Download- Button) in ".zip" file format
 
 ## Version History
 
+* 0.9.1 (13.12.2012)
+** Added compatibility for Firefox 17 (Firebug 1.11)
+** Implemented AMD & bootstrapped architecture
+** Fixed major issue with domplate interaction
+
 * 0.9.0 (14.01.2012)
 ** Added compatibility for Firefox 9.0.1 (Firebug 1.9.0)
 ** Added support for all style rule types (@fontface, @media, etc)
