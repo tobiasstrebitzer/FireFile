@@ -1,4 +1,4 @@
-## [Install FireFile from your Browser (Firefox)](https://github.com/downloads/tobiasstrebitzer/FireFile/FireFile.xpi)
+## [Install FireFile from Mozilla Addons](https://addons.mozilla.org/en-US/developers/addons)
 
 ## FireFile Firebug Extension
 
