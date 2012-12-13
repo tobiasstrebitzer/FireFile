@@ -1,24 +1,9 @@
 /* See license.txt for terms of usage */
 
-// ********************************************************************************************* //
-// XPCOM
-
 var {classes: Cc, interfaces: Ci, utils: Cu} = Components;
 
 Cu.import("resource://gre/modules/Services.jsm");
 Cu.import("resource://gre/modules/AddonManager.jsm");
-
-// ********************************************************************************************* //
-// Constants
-
-// Default preferences for bootstrap extensions are registered dynamically.
-var defaultPrefs =
-{
-    "DBG_FIREFILE": true,
-}
-
-// ********************************************************************************************* //
-// Firefox Bootstrap API
 
 function install(data, reason) {}
 function uninstall(data, reason) {}
@@ -40,13 +25,13 @@ function shutdown(data, reason) { firebugShutdown(); }
  */
 function firebugStartup()
 {
-
+    // var isFb = false;
     try {
         Cu.import("resource://firebug/loader.js");
         FirebugLoader.registerBootstrapScope(this);
-        FirebugLoader.registerDefaultPrefs(defaultPrefs);
     }
     catch (e) {
+        
     }
     
 }
@@ -89,92 +74,50 @@ function topWindowLoad(win)
     button.setAttribute("class", "toolbarbutton-1 chromeclass-toolbar-additional");
     button.style.listStyleImage = "url(chrome://FireFile/skin/status_disabled.png)";
     button.setAttribute("tooltiptext", "FireFileToolTip");
-    restorePosition(doc, button);
+    button.addEventListener("command", function() {
+        // Load Firebug and set FireFile Panel
+        var requireScope = {};
+        Cu.import("resource://firebug/mini-require.js", requireScope);
+        var require = requireScope.require;
+        var config = {
+            baseUrl: "resource://",
+            paths: {"firebug": "chrome://firebug/content"}
+        };
+        require(config, [
+            "firebug/lib/trace"
+        ], function(FBTrace) {
+            win.Firebug.browserOverlay.startFirebug(function() {
+                win.Firebug.toggleBar(true);
+                win.Firebug.FireFile.clickStatus();
+            });
+        });
+    }, false);
+    restorePosition(win, button);
     var navBar = doc.getElementById("nav-bar");
-        
     if(navBar) {
         var currentSet = navBar.getAttribute("currentset").split(",");
         var exists = currentSet.indexOf(firefileButtonId);
         var atPosition = currentSet.indexOf(firebugButtonId) + 1;
         if(exists == -1) {
-            // Add button
             currentSet.push(firefileButtonId);
             navBar.setAttribute("currentset", currentSet.join(","));
             doc.persist(navBar.id, "currentset");
-            win.alert("added button");
         }
     }
 }
 
-restorePosition = function(doc, button) {
-  function $(sel, all)
-    doc[all ? "querySelectorAll" : "getElementById"](sel);
-    
-  ($("navigator-toolbox") || $("mail-toolbox")).palette.appendChild(button);
-    
-  let toolbar, currentset, idx,
-      toolbars = $("toolbar", true);
-  for (let i = 0; i < toolbars.length; ++i) {
-    let tb = toolbars[i];
-    currentset = tb.getAttribute("currentset").split(","),
-    idx = currentset.indexOf(button.id);
-    if (idx != -1) {
-      toolbar = tb;
-      break;
-    }
-  }
-    
-  // saved position not found, using the default one, if any
-  if (!toolbar && (button.id in positions)) {
-    let [tbID, beforeID] = positions[button.id];
-    toolbar = $(tbID);
-    [currentset, idx] = persist(doc, toolbar, button.id, beforeID);
-  }
-    
-  if (toolbar) {
-    if (idx != -1) {
-      // inserting the button before the first item in `currentset`
-      // after `idx` that is present in the document
-      for (let i = idx + 1; i < currentset.length; ++i) {
-        let before = $(currentset[i]);
-        if (before) {
-          toolbar.insertItem(button.id, before);
-          return;
-        }
-      }
-    }
-    toolbar.insertItem(button.id);
-  }
-};
-
-/**
- * Executed by Firebug framework when this extension
- * @param {Object} win
- */
 function topWindowUnload(win)
 {
-    // TODO: remove global browser window overlays
+    // nothing to do here
 }
 
-/**
- * Entire Firebug UI is running inside an iframe (firebugFrame.xul). This function
- * is executed by Firebug framework when the frame is loaded. This happens when
- * the user requires Firebug for the first time (doesn't have to happen during the
- * Firefox session at all)
- * 
- * @param {Window} win The Firebug window
- */
 function firebugFrameLoad(Firebug)
 {
     
-    // Register trace listener the customizes trace logs coming from this extension
-    // * helloBootAMD; is unique prefix of all messages that should be customized.
-    // * DBG_HELLOBOOTAMD is a class name with style defined in the specified stylesheet.
+    // Register trace prefix
     Firebug.registerTracePrefix("fireFile;", "DBG_FIREFILE", true, "chrome://firefile/skin/skin.css");
 
-    // The registration process will automatically look for 'main' module and load it.
-    // The is the same what happens in a XUL overlay applied on:
-    // chrome://firebug/content/firebugOverlay.xul
+    // Register firefile extension
     var config = {id: "firefile@strebitzer.at"};
     Firebug.registerExtension("firefile", config);
     
@@ -182,11 +125,55 @@ function firebugFrameLoad(Firebug)
 
 function firebugFrameUnload(Firebug)
 {
-    if (!Firebug.isInitialized)
+    if (!Firebug.isInitialized) {
         return;
-
+    }
+        
+    // Unregister firefile extension
     Firebug.unregisterExtension("firefile");
     Firebug.unregisterTracePrefix("fireFile;");
 }
 
-// ********************************************************************************************* //
+/**
+ * Helper function to restore the addon- button in the toolbar
+ * 
+ * @param {Window} win The browser window
+ * @param button The button element
+ */
+restorePosition = function(win, button) {
+    var doc = win.document;
+    var toolbar;
+    var currentset;
+    var idx;
+    var toolbars = doc.querySelectorAll("toolbar");
+    var toolbox = doc.getElementById("navigator-toolbox");
+    toolbox.palette.appendChild(button);
+    for (let i = 0; i < toolbars.length; ++i) {
+        var tb = toolbars[i];
+        currentset = tb.getAttribute("currentset").split(","),
+        idx = currentset.indexOf(button.id);
+        if (idx != -1) {
+            toolbar = tb;
+            break;
+        }
+    }
+    
+    if (!toolbar && (button.id in positions)) {
+        var [tbID, beforeID] = positions[button.id];
+        toolbar = doc.getElementById(tbID);
+        [currentset, idx] = persist(doc, toolbar, button.id, beforeID);
+    }
+    
+    if (toolbar) {
+        if (idx != -1) {
+            for (let i = idx + 1; i < currentset.length; ++i) {
+                let before = doc.getElementById(currentset[i]);
+                if (before) {
+                    toolbar.insertItem(button.id, before);
+                    return;
+                }
+            }
+        }
+        toolbar.insertItem(button.id);
+    }
+};

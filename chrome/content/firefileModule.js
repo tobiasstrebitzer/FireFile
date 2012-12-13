@@ -6,9 +6,10 @@ define([
     "firebug/lib/xpcom",
     "firebug/lib/dom",
     "firebug/lib/domplate",
-    "firebug/lib/locale"
+    "firebug/lib/locale",
+    "firebug/lib/events"
 ],
-function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale) {
+function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale, Events) {
     
 with (Domplate) {
 
@@ -613,8 +614,8 @@ with (Domplate) {
                 var result = HtmlCssSelectOrig.apply(this, arguments);
 
 				// Add Stylesheet if not exists
-				if(this.document.styleSheets[this.document.styleSheets.length - 1].href != "chrome://firefile/content/firefile.css") {
-					Firebug.FireFile.loadCss("chrome://FireFile/content/firefile.css", this.document);
+				if(this.document.styleSheets[this.document.styleSheets.length - 1].href != "chrome://firefile/skin/firefile.css") {
+					Firebug.FireFile.loadCss("chrome://FireFile/skin/firefile.css", this.document);
 				}
 
 				if(this.template.isFireFile == undefined) {
