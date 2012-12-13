@@ -1,4 +1,4 @@
-## [Install FireFile from Mozilla Addons](https://addons.mozilla.org/en-US/developers/addons)
+## [Install FireFile from Mozilla Addons](https://addons.mozilla.org/de/firefox/addon/firefile/)
 
 ## FireFile Firebug Extension
 
