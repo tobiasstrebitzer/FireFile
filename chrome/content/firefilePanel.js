@@ -302,10 +302,6 @@ with (Domplate) {
 	    }
 
     });
-    
-    Firebug.Console.log("FireFilePanel");
-    Firebug.Console.log(FireFilePanel);
-    
         
     return FireFilePanel;
     

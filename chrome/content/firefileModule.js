@@ -379,11 +379,13 @@ with (Domplate) {
 			}
 
 			}catch(ex) {
-				Firebug.Console.log(ex);
+                if(Firebug.FireFile.prefs.enable_debug_mode) {
+				    Firebug.Console.log(ex);
+                }
 			}
 		},
 		showContext: function(browser, context) {
-
+            
 			if(!context) { return; }
 
 			// CHECK IF ALLOWED FOR THIS PAGE
@@ -765,13 +767,8 @@ with (Domplate) {
                 if (value != null && value != Firebug.FireFile.cssPreviousValue) {
 
                     // GET STYLESHEET
-                    console.log(Firebug);
-                    
                     var cssRule = Dom.getAncestorByClass(target, "cssRule");
                     var styleRule = Firebug.getRepObject(cssRule);
-                    // var styleRule = Firebug.getRepObject(target);
-                    Firebug.Console.log(target);
-                    Firebug.Console.log(styleRule);
                     
                     if(styleRule != undefined) {
 
@@ -892,8 +889,6 @@ with (Domplate) {
         setStatus: function(img) {
             var button = top.document.getElementById("firefile-button");
             button.style.listStyleImage = "url(chrome://FireFile/skin/status_"+img+".png)";
-            Firebug.Console.log(button);
-            Firebug.Console.log(img);
         },
         downloadChange: function(index) {
 
