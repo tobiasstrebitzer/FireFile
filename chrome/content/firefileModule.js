@@ -273,8 +273,6 @@ with (Domplate) {
                     var href = node.getAttribute('styleurl');
                 }
                 
-                
-                
                 if(Firebug.FireFile.styleSheetExists(href)) {
                     // GET STYLESHEET DATA
                     var index = Firebug.FireFile.styleSheetIndexByHref(href);
@@ -293,6 +291,7 @@ with (Domplate) {
                         // CALL REFRESHER
                         Firebug.FireFile.visualUpdateHandler(true);
                     }, function(e) {
+                        
                         // ON ERROR
                         Firebug.FireFile.updateNotify("fferror", 8, 1, "FileErrors");
                         Firebug.FireFile.setStatus("closed");
@@ -306,9 +305,7 @@ with (Domplate) {
                     // CALL REFRESHER
                     Firebug.FireFile.visualUpdateHandler();
                 }
-            }catch(ex){
-                
-                FBTrace.sysout("fireFile; error", ex);
+            }catch(e){
                 
                 // ERROR OUTPUT WHEN NOT IN REGISTERED SITES
                 Firebug.FireFile.updateNotify("fferror", 8, 1, "FileErrors");
@@ -317,9 +314,6 @@ with (Domplate) {
                 // CALL REFRESHER
                 Firebug.FireFile.visualUpdateHandler();
 
-			    if(Firebug.FireFile.prefs.enable_debug_mode) {
-			        Firebug.Console.log(ex);
-			    }
                 return false;
             }
 		},
@@ -584,16 +578,16 @@ with (Domplate) {
             if(stylePanel.location != undefined) {
                 var href = stylePanel.location.href;
                 if(this.styleSheetExists(href)) {
-                    removeClass($("ffCssPanelSaveButton"), "disabled");
-                    removeClass($("ffCssPanelSaveButton"), "error");
-                    removeClass($("ffCssPanelSaveButton"), "autosave");
-                    removeClass($("ffCssPanelSaveButton"), "saving");
-                    removeClass($("ffCssPanelSaveButton"), "done");
+                    $("ffCssPanelSaveButton").removeClass("disabled");
+                    $("ffCssPanelSaveButton").removeClass("error");
+                    $("ffCssPanelSaveButton").removeClass("autosave");
+                    $("ffCssPanelSaveButton").removeClass("saving");
+                    $("ffCssPanelSaveButton").removeClass("done");
                     if(Firebug.FireFile.styleSheetStatus[href] != undefined) {
-                        setClass($("ffCssPanelSaveButton"), Firebug.FireFile.styleSheetStatus[href]);
+                        $("ffCssPanelSaveButton").attr("class", Firebug.FireFile.styleSheetStatus[href]);
                     }
                 }else{
-                    setClass($("ffCssPanelSaveButton"), "disabled");
+                    $("ffCssPanelSaveButton").attr("class", "disabled");
                 }
             }
         },
@@ -990,15 +984,8 @@ with (Domplate) {
 			xmlhttp.onreadystatechange = function(e) {
 				var xmlhttp = e.currentTarget;
 
-				// DEBUG
-				try{
-				    if(Firebug.FireFile.prefs.enable_debug_mode) {
-				        Firebug.Console.log("response ["+xmlhttp.readyState+"]:");
-				        Firebug.Console.log(xmlhttp.responseText);
-				    }
-				}catch(ex){ /* DO NOTHING */ }
-
 				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    
 					// GET XML RESPONSE
 					var status = xmlhttp.responseXML.getElementsByTagName("firefilestatus")[0];
 
@@ -1055,14 +1042,11 @@ with (Domplate) {
             xmlhttp.send(filetype + "=" + Firebug.FireFile.encodeData(contents) + "&file=" + Firebug.FireFile.encodeData(href) + "&action=save&code=" + site.hash + "&index="+index);
 
 		    if(Firebug.FireFile.prefs.enable_debug_mode) {
-		        Firebug.Console.log("params:");
-		        Firebug.Console.log({
-		            siteurl: site.url,
-		            contents: contents,
-		            href: href
-		        });
-		        Firebug.Console.log("request:");
-		        Firebug.Console.log(filetype + "=" + Firebug.FireFile.encodeData(contents) + "&file=" + Firebug.FireFile.encodeData(href) + "&action=save&code=" + site.hash + "&index="+index);
+                Firebug.Console.log("hash:     " + site.hash);
+		        Firebug.Console.log("url:      " + site.url);
+                Firebug.Console.log("contents: " + contents);
+                Firebug.Console.log("href:     " + href);
+                Firebug.Console.log("filetype: " + filetype);
 		    }
 
             return true;
