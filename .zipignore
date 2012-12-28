@@ -1,0 +1,8 @@
+.git/*
+xpi/*
+.gitignore
+.zipignore
+.DS_Store
+*/.DS_Store
+README.md
+Rakefile
