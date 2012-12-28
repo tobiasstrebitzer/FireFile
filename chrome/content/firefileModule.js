@@ -7,17 +7,22 @@ define([
     "firebug/lib/dom",
     "firebug/lib/domplate",
     "firebug/lib/locale",
-    "firebug/lib/events"
+    "firebug/lib/events",
+    "firefile/lib/csstransformer",
+    "firefile/lib/csssaver"
 ],
-function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale, Events) {
+function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale, Events, CssTransformer, CssSaver) {
     
 with (Domplate) {
+
+    var Cc = Components.classes;
+    var Ci = Components.interfaces;
 
     // Register FireFile string bundles.
     const categoryManager = Xpcom.CCSV("@mozilla.org/categorymanager;1", "nsICategoryManager");
     const stringBundleService = Xpcom.CCSV("@mozilla.org/intl/stringbundle;1", "nsIStringBundleService");
-    const FireFilePrefDomain = "extensions.firefile";
-    const PromptService = Components.classes["@mozilla.org/embedcomp/prompt-service;1"].getService(Components.interfaces.nsIPromptService);
+    const PromptService = Cc["@mozilla.org/embedcomp/prompt-service;1"].getService(Ci.nsIPromptService);
+    const PrefBranch = Cc["@mozilla.org/preferences-service;1"].getService(Ci.nsIPrefBranch).getBranch("extensions.firefile.");
 
     var CSSDomplateBase = {
         isEditable: function(rule)
@@ -44,7 +49,7 @@ with (Domplate) {
 				return [];
 			}
 
-			var result = Firebug.FireFile.CssTransformer.getCommentForRule(object.rule);
+			var result = CssTransformer.getCommentForRule(object.rule);
 			if(result !== false) {
 				return result.split("\n");
 			}
@@ -58,7 +63,7 @@ with (Domplate) {
 			// For now, return empty array
 			return [];
 
-			var result = Firebug.FireFile.CssTransformer.getPropertyCommentsForRule(object);
+			var result = CssTransformer.getPropertyCommentsForRule(object);
 			if(result !== false) {
 				return result;
 			}
@@ -67,28 +72,28 @@ with (Domplate) {
     };
 
     var CSSPropTag = domplate(CSSDomplateBase, {
-        tag: DIV({"class": "cssProp focusRow", $disabledStyle: "$prop.disabled",
+        tag: DIV({class: "cssProp focusRow", $disabledStyle: "$prop.disabled",
             $editGroup: "$rule|isEditable",
             $cssOverridden: "$prop.overridden", 
             role: "option"},
             
             // Use spaces for indent to make "copy to clipboard" nice.
 			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;"),
-            SPAN({"class": "cssPropName", $editable: "$rule|isEditable"}, 
+            SPAN({class: "cssPropName", $editable: "$rule|isEditable"}, 
                 "$prop.name"
             ),
             
             // Use a space here, so that "copy to clipboard" has it (issue 3266).
-            SPAN({"class": "cssColon"}, ":&nbsp;"),
-            SPAN({"class": "cssPropValue", $editable: "$rule|isEditable",
+            SPAN({class: "cssColon"}, ":&nbsp;"),
+            SPAN({class: "cssPropValue", $editable: "$rule|isEditable",
                 _repObject: "$prop.value$prop.important"}, "$prop|getPropertyValue$prop.important"
             ),
-            SPAN({"class": "cssSemi"}, ";")
+            SPAN({class: "cssSemi"}, ";")
         )
     });
 
     var CSSPropCommentTag = domplate(CSSDomplateBase, {
-        tag: DIV({"class": "cssProp focusRow propComment"},
+        tag: DIV({class: "cssProp focusRow propComment"},
 			SPAN("&nbsp;&nbsp;&nbsp;&nbsp;/* $comment */")
         )
     });
@@ -96,9 +101,9 @@ with (Domplate) {
     var CSSRuleTag = TAG("$rule.tag", {rule: "$rule"});
 
     var CSSImportRuleTag = domplate({
-        tag: DIV({"class": "cssRule insertInto focusRow importRule", _repObject: "$rule.rule"},
+        tag: DIV({class: "cssRule insertInto focusRow importRule", _repObject: "$rule.rule"},
             "@import &quot;",
-            A({"class": "objectLink", _repObject: "$rule.rule.styleSheet"}, "$rule.rule.href"),
+            A({class: "objectLink", _repObject: "$rule.rule.styleSheet"}, "$rule.rule.href"),
             "&quot;;"
         )
     });
@@ -106,19 +111,19 @@ with (Domplate) {
     var CSSStyleRuleTag = domplate(CSSDomplateBase, 
     {
         tag: 
-            DIV({"class": "cssRule insertInto",
+            DIV({class: "cssRule insertInto",
                 $cssEditableRule: "$rule|isEditable",
                 $insertInto: "$rule|isEditable",
                 $editGroup: "$rule|isSelectorEditable",
                 _repObject: "$rule.rule",
                 role: "presentation"},
-                DIV({"class": "ruleComment", title: "Comment"},
+                DIV({class: "ruleComment", title: "Comment"},
                     FOR("comment", "$rule|getComments",
-                	    DIV({"class": "ruleCommentLine"}, "$comment")
+                	    DIV({class: "ruleCommentLine"}, "$comment")
                     )
                 ),
-                DIV({"class": "cssHead focusRow", role : 'listitem'},
-                    SPAN({"class": "cssSelector", $editable: "$rule|isSelectorEditable"}, 
+                DIV({class: "cssHead focusRow", role : 'listitem'},
+                    SPAN({class: "cssSelector", $editable: "$rule|isSelectorEditable"}, 
                         "$rule.selector"), 
                         " {"
             ),
@@ -141,8 +146,8 @@ with (Domplate) {
 
     var FireFileStyleDomPlate = domplate({
         cascadedTag:
-            DIV({"class": "a11yCSSView", role: 'presentation'},
-                DIV({"class": "cssNonInherited", role: "list",
+            DIV({class: "a11yCSSView", role: 'presentation'},
+                DIV({class: "cssNonInherited", role: "list",
                         "aria-label" : Locale.$STR("aria.labels.style rules") },
                     FOR("rule", "$rules",
                         TAG("$ruleTag", {rule: "$rule"})
@@ -150,8 +155,8 @@ with (Domplate) {
                 ),
                 DIV({role: "list", 'aria-label' :Locale.$STR('aria.labels.inherited style rules')},
                     FOR("section", "$inherited",
-                        H1({"class": "cssInheritHeader groupHeader focusRow", role: 'listitem' },
-                            SPAN({"class": "cssInheritLabel"}, "$inheritLabel"),
+                        H1({class: "cssInheritHeader groupHeader focusRow", role: 'listitem' },
+                            SPAN({class: "cssInheritLabel"}, "$inheritLabel"),
                             TAG(FirebugReps.Element.shortTag, {object: "$section.element"})
                         ),
                         DIV({role: "group"},
@@ -164,24 +169,24 @@ with (Domplate) {
             ),
 
         ruleTag:
-            DIV({"class": "cssElementRuleContainer"},
+            DIV({class: "cssElementRuleContainer"},
                 TAG(CSSStyleRuleTag.tag, {rule: "$rule"}),
-			    DIV({"class": "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
-                    DIV({"class": "$rule|isTouched", onclick: "$saveChange", title: Locale.$STR("ClickToSaveChanges", "strings_firefile")}),
+			    DIV({class: "cssSourceLinkContainer FireFileChangeHook", styleurl: "$rule|getHref"},
+                    DIV({class: "$rule|isTouched", onclick: "$saveChange", title: Locale.$STR("ClickToSaveChanges", "strings_firefile")}),
 				    TAG(FirebugReps.SourceLink.tag, {object: "$rule.sourceLink"})
               )
           ),
           
         newRuleTag:
-            DIV({"class": "cssElementRuleContainer"},
-                DIV({"class": "cssRule insertBefore", style: "display: none"}, "")
+            DIV({class: "cssElementRuleContainer"},
+                DIV({class: "cssRule insertBefore", style: "display: none"}, "")
             ),
             
         CSSFontPropValueTag:
-            SPAN({"class": "cssFontPropValue"},
+            SPAN({class: "cssFontPropValue"},
                 FOR("part", "$propValueParts",
-                    SPAN({"class": "$part.type|getClass", _repObject: "$part.font"}, "$part.value"),
-                    SPAN({"class": "cssFontPropSeparator"}, "$part|getSeparator")
+                    SPAN({class: "$part.type|getClass", _repObject: "$part.font"}, "$part.value"),
+                    SPAN({class: "cssFontPropSeparator"}, "$part|getSeparator")
                 )
             ),
         getSeparator: function(part)
@@ -236,7 +241,9 @@ with (Domplate) {
             return "";
         },
         saveChange: function(e) {
-            Firebug.FireFile.saveIconClicked(e.target);
+            var node = Dom.getAncestorByClass(e.target, "FireFileChangeHook");
+            var href = node.getAttribute('styleurl');
+            CssSaver.save(href);
         },
 		isFireFile: true
     });
@@ -264,59 +271,6 @@ with (Domplate) {
 		cssPreviousValue: "",
 		cssEditing: false,
 
-		saveIconClicked: function(target) {
-            try{
-                if(typeof(target) == "string") {
-                    var href = target;
-                }else{
-                    var node = Dom.getAncestorByClass(target, "FireFileChangeHook");
-                    var href = node.getAttribute('styleurl');
-                }
-                
-                if(Firebug.FireFile.styleSheetExists(href)) {
-                    // GET STYLESHEET DATA
-                    var index = Firebug.FireFile.styleSheetIndexByHref(href);
-                    var stylesheet = Firebug.FireFile.modifiedStylesheets[index];
-
-                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(Firebug.FireFile.modifiedStylesheets[index], Firebug.FireFile.prefs.compress_css);
-					if(contents === false) {throw "Unable to create css file";}
-
-                    var href = Firebug.FireFile.modifiedStylesheets[index].href;
-                    var filetype = "stylesheet";
-                	var registered_site = Firebug.FireFile.getHrefInAllowedSites(href);
-                    Firebug.FireFile.sendFile(index, contents, href, registered_site, filetype, function(e) {
-                        // ON SUCCESS
-                        Firebug.FireFile.styleSheetStatus[href] = "done";
-                        Firebug.FireFile.modifiedStylesheets.splice(index,1);
-                        // CALL REFRESHER
-                        Firebug.FireFile.visualUpdateHandler(true);
-                    }, function(e) {
-                        
-                        // ON ERROR
-                        Firebug.FireFile.updateNotify("fferror", 8, 1, "FileErrors");
-                        Firebug.FireFile.setStatus("closed");
-                        Firebug.FireFile.styleSheetStatus[href] = "error";
-
-                        // CALL REFRESHER
-                        Firebug.FireFile.visualUpdateHandler(true);
-                        return false;
-                    });
-                    Firebug.FireFile.styleSheetStatus[href] = "saving";
-                    // CALL REFRESHER
-                    Firebug.FireFile.visualUpdateHandler();
-                }
-            }catch(e){
-                
-                // ERROR OUTPUT WHEN NOT IN REGISTERED SITES
-                Firebug.FireFile.updateNotify("fferror", 8, 1, "FileErrors");
-                Firebug.FireFile.setStatus("closed");
-                Firebug.FireFile.styleSheetStatus[href] = "error";
-                // CALL REFRESHER
-                Firebug.FireFile.visualUpdateHandler();
-
-                return false;
-            }
-		},
 		destroyContext: function(context, persistedState) {
 
 			var stylesheets = context.window.document.styleSheets;
@@ -442,7 +396,7 @@ with (Domplate) {
 
             // SETUP PREFERENCES
             for(var key in this.prefs) {
-                this.prefs[key] = Firebug.getPref(FireFilePrefDomain, key);
+                this.prefs[key] = Firebug.getPref("extensions.firefile", key);
             }
 
 			// OVERRIDE INSPECTOR FUNCTION
@@ -476,12 +430,10 @@ with (Domplate) {
             doc.body.appendChild(newCss);
             return newCss;
         },
-        getActiveWindow: function() {
-            return Firebug.chrome.getCurrentBrowser()._contentWindow;
-        },
 		hasPrefSitesWithUri: function(prePath) {
 			// SHORTER WAY
-			if(Components.classes["@mozilla.org/preferences-service;1"].getService(Components.interfaces.nsIPrefBranch).getCharPref("extensions.firefile.sites").indexOf(prePath) != -1) {
+            var sitesString = Firebug.getPref("extensions.firefile", "sites");;
+			if(sitesString.indexOf(prePath) != -1) {
 				return true;
 			}else{
 				return false;
@@ -495,7 +447,7 @@ with (Domplate) {
             try{
                 // BUILD FROM PREFERENCES
                 this.sitesArray = [];
-                var sitesString = Firebug.getPref(FireFilePrefDomain, "sites");
+                var sitesString = Firebug.getPref("extensions.firefile", "sites");
                 var sitesRows = sitesString.split(";");
                 for(var i in sitesRows) {
                     var row = sitesRows[i].split("|");
@@ -531,7 +483,7 @@ with (Domplate) {
                     sitesRows.push(this.sitesArray[i].url+"|"+this.sitesArray[i].hash+"|"+this.sitesArray[i].label+"|"+autosave);
                 }
             }
-            Firebug.setPref(FireFilePrefDomain, "sites", sitesRows.join(";"));
+            Firebug.setPref("extensions.firefile", "sites", sitesRows.join(";"));
 
         },
         getSiteIndexByUrl: function(url) {
@@ -594,7 +546,7 @@ with (Domplate) {
         saveCurrentStylesheet: function() {
             var href = Firebug.currentContext.getPanel('stylesheet').location.href;
             if(this.styleSheetExists(href)) {
-                this.saveIconClicked(href);
+                CssSaver.save(href);
             }
         },
         hookIntoHtmlContext: function() {
@@ -610,9 +562,11 @@ with (Domplate) {
                 var result = HtmlCssSelectOrig.apply(this, arguments);
 
 				// Add Stylesheet if not exists
+                /*
 				if(this.document.styleSheets[this.document.styleSheets.length - 1].href != "chrome://firefile/skin/firefile.css") {
 					Firebug.FireFile.loadCss("chrome://FireFile/skin/firefile.css", this.document);
 				}
+                */
 
 				if(this.template.isFireFile == undefined) {
 					this.template = FireFileStyleDomPlate;
@@ -808,7 +762,7 @@ with (Domplate) {
                 for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
                     var existing_site = Firebug.FireFile.getHrefInAllowedSites(Firebug.FireFile.modifiedStylesheets[i].href);
                     if(existing_site && existing_site.autosave) {
-                        Firebug.FireFile.saveIconClicked(Firebug.FireFile.modifiedStylesheets[i].href);
+                        CssSaver.save(Firebug.FireFile.modifiedStylesheets[i].href);
                     }
                 }
             }
@@ -818,7 +772,7 @@ with (Domplate) {
             for(var i=Firebug.FireFile.modifiedStylesheets.length-1;i>=0;i--) {
                 var existing_site = Firebug.FireFile.getHrefInAllowedSites(Firebug.FireFile.modifiedStylesheets[i].href);
                 if(existing_site) {
-                    Firebug.FireFile.saveIconClicked(Firebug.FireFile.modifiedStylesheets[i].href);
+                    CssSaver.save(Firebug.FireFile.modifiedStylesheets[i].href);
                 }
             }
         },
@@ -845,27 +799,25 @@ with (Domplate) {
             top.Firebug.chrome.selectSidePanel("firefile");
             Firebug.currentContext.getPanel("firefile").select();
         },
-        __: function(msg) {
+        __: function(text) {
             try{
                 if (Firebug.FireFile.stringBundle == undefined) {
                     categoryManager.addCategoryEntry("strings_firefile", "chrome://FireFile/locale/firefile.properties", "", false, true);
                     Firebug.FireFile.stringBundle = stringBundleService.createExtensibleBundle("strings_firefile");
                 }
-                msg = Firebug.FireFile.stringBundle.GetStringFromName(msg);
+                text = Firebug.FireFile.stringBundle.GetStringFromName(text);
 
                 // REPLACE PLACEHOLDERS
                 if(arguments.length > 1) {
                     for(var i=1;i<arguments.length;i++) {
-                        msg = msg.replace("$"+i, arguments[i]);
+                        text = text.replace("$"+i, arguments[i]);
                     }
                 }
 
-                return msg;
+                return text;
             }catch(ex) {
-			    if(Firebug.FireFile.prefs.enable_debug_mode) {
-			        Firebug.Console.log(ex);
-			    }
-                return msg;
+                Firebug.FireFile.addDebugInfo("Untranslated Text", {text: text});
+                return text;
             }
         },
         generateSitesPrefString: function(sites) {
@@ -882,40 +834,9 @@ with (Domplate) {
         },
         setStatus: function(img) {
             var button = top.document.getElementById("firefile-button");
-            button.style.listStyleImage = "url(chrome://FireFile/skin/status_"+img+".png)";
-        },
-        downloadChange: function(index) {
-
-            // GET CONTENTS
-            if(index == -1) {
-                // HTML CONTENTS
-                var contents = Firebug.FireFile.generateHTMLContents();
-                var save_path = Firebug.FireFile.getDownloadPathDialog(this.filenameFromHref(this.getActiveWindow().location.href));
-            }else{
-                try{
-                    // GET STYLESHEET AND FILENAME
-                    var styleSheet = Firebug.FireFile.modifiedStylesheets[index];
-                    var contents = Firebug.FireFile.CssTransformer.generateCSSContents(styleSheet, Firebug.FireFile.prefs.compress_css);
-                	var save_path = Firebug.FireFile.getDownloadPathDialog(this.filenameFromHref(styleSheet.href));
-                }catch(exception) {
-                    // RETURN ON ERROR
-                    return false;
-                }
+            if(button != null) {
+                button.style.listStyleImage = "url(chrome://FireFile/skin/status_"+img+".png)";
             }
-
-    	    // EXIT IF NO FILE SPECIFIED
-            if(!save_path) { return false; }
-            if(contents === false) { return false; }
-
-            // WRITE FILE TO DISK
-            if(Firebug.FireFile.writeFile(contents, save_path)) {
-    			// NOTIFY USER
-    			Firebug.FireFile.updateNotify("ffnotify", 4, 1, "FileSaveAsSuccess", true);
-            }else{
-                Firebug.FireFile.updateNotify("fferror", 8, 1, "FileErrors");
-                Firebug.FireFile.setStatus("closed");
-            }
-
         },
         filenameFromHref: function(href) {
         	var url_array = href.split("/");
@@ -931,11 +852,11 @@ with (Domplate) {
         },
     	writeFile: function(contents, save_path) {
 		    // INIT FILE
-			var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsILocalFile);
+			var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
 			file.initWithPath(save_path);
 
 			// INIT STREAM
-			var foStream = Components.classes["@mozilla.org/network/file-output-stream;1"].createInstance(Components.interfaces.nsIFileOutputStream);
+			var foStream = Cc["@mozilla.org/network/file-output-stream;1"].createInstance(Ci.nsIFileOutputStream);
 
             try{
     			// WRITE STREAM
@@ -949,145 +870,22 @@ with (Domplate) {
 			return true;
 
     	},
-    	getDownloadPathDialog: function(defaultName) {
-    		// INIT FILEPICKER
-    		var nsIFilePicker = Components.interfaces.nsIFilePicker;
-    		var fp = Components.classes["@mozilla.org/filepicker;1"].createInstance(nsIFilePicker);
-    		fp.init(window, Firebug.FireFile.__("SaveDialogTitle"), nsIFilePicker.modeSave);
-    		fp.appendFilter(Firebug.FireFile.__("SaveDialogStylesheet"),"*.css");
-    		fp.defaultExtension = "css";
-    		fp.defaultString = defaultName;
-
-    		// SHOW FILEPICKER
-    		var res = fp.show();
-
-    		// HANDLE RESPONSE
-    		if(res != nsIFilePicker.returnOK && res != nsIFilePicker.returnReplace) { return false; }
-
-	        // GET FILENAME
-	        return fp.file.path;
-    	},
-		sendFile: function(index, contents, href, site, filetype, successEvent, errorEvent) {
-
-            // START TRANSFER
-            Firebug.FireFile.setStatus("open");
-
-            // POST TO SERVER
-            xmlhttp = new XMLHttpRequest();
-			xmlhttp.overrideMimeType('text/xml');
-			xmlhttp.id = "change_request_"+index;
-            xmlhttp.open("POST", site.url, true);
-            xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-            xmlhttp.overrideMimeType('text/xml');
-
-			// SETUP TRANSFER
-			xmlhttp.onreadystatechange = function(e) {
-				var xmlhttp = e.currentTarget;
-
-				if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    
-					// GET XML RESPONSE
-					var status = xmlhttp.responseXML.getElementsByTagName("firefilestatus")[0];
-
-					// INVALID RESPONSE
-					if(status == undefined) {
-					    // ANALYSE ERROR
-                        if(xmlhttp.responseText == "<?xml version='1.0' encoding='ISO-8859-1'?>invalid_file_extension") {
-                            var msg = "VersionError";
-                        }else{
-                            var msg = "ServerError";
-                        }
-
-                        // GET INDEX FROM REQUEST ID
-                        var styleindex = xmlhttp.id.split("change_request_").join("");
-
-                        // THROW ERROR
-						Firebug.FireFile.onSaveError.call(Firebug.FireFile, false, styleindex, msg);
-						if(errorEvent != undefined) {
-							errorEvent.call(Firebug.FireFile, false, styleindex, msg);
-						}
-
-					    return false;
-					}
-
-					// READ RESPONSE
-					var version = status.getAttribute("version");
-					var success = status.getAttribute("success");
-					var msg = status.getAttribute("msg");
-					var styleindex = parseInt(status.getAttribute("styleindex"));
-
-					if(success == "true") {
-                        Firebug.FireFile.onSaveSuccess.call(Firebug.FireFile, success, styleindex, msg);
-						if(successEvent != undefined) {
-							successEvent.call(Firebug.FireFile, success, styleindex, msg);
-						}
-					}else{
-						Firebug.FireFile.onSaveError.call(Firebug.FireFile, success, styleindex, msg);
-						if(errorEvent != undefined) {
-							errorEvent.call(Firebug.FireFile, success, styleindex, msg);
-						}
-					}
-
-				}
-			}
-
-            // FIX HREF
-            var qpos = href.search(/\?/);
-            if(qpos !== false && qpos != -1) {
-                href = href.substr(0, qpos);
-            }
-
-            // START TRANSFER
-            // todo: @import statements, @require statements
-            xmlhttp.send(filetype + "=" + Firebug.FireFile.encodeData(contents) + "&file=" + Firebug.FireFile.encodeData(href) + "&action=save&code=" + site.hash + "&index="+index);
-
-		    if(Firebug.FireFile.prefs.enable_debug_mode) {
-                Firebug.Console.log("hash:     " + site.hash);
-		        Firebug.Console.log("url:      " + site.url);
-                Firebug.Console.log("contents: " + contents);
-                Firebug.Console.log("href:     " + href);
-                Firebug.Console.log("filetype: " + filetype);
-		    }
-
-            return true;
-
+        isLoggedIn: function() {
+            return (Firebug.getPref("extensions.firefile", "token") != "" && Firebug.getPref("extensions.firefile", "username") != "");
         },
-        generateHTMLContents: function() {
-            // GET DOM DOCUMENT
-            var doc = Firebug.chrome.getCurrentBrowser()._contentWindow.document;
-            var retVal = "";
-
-            // GENERATE DOCTYPE
-            // <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-            var doctype = doc.doctype;
-            if(doctype != null) {
-                var publicId = doctype.publicId;
-                var systemId = doctype.systemId;
-                retVal += '<!DOCTYPE html PUBLIC "'+publicId+'" "'+systemId+'">\n';
-            }
-
-            // GENERATE HTML (HEAD+BODY)
-            retVal += "<html>";
-            retVal += doc.documentElement.innerHTML;
-            retVal += "</html>";
-
-            // REMOVE FIREBUG STUFF
-            // <div firebugversion="1.5.0" style="display: none;" id="_firebugConsole"></div>
-            // <style type="text/css" charset="utf-8">...firebugCanvas {...</style>
-            retVal = retVal.replace(/<div firebugversion[^>]+><\/div>/, "");
-            retVal = retVal.replace(/<style type=\"text\/css\" charset=\"utf-8\">\/\* See license\.txt for terms of usage \*\/[^<]+<\/style>/, "");
-
-            return retVal;
+        isServerStylesheetUrl: function(href) {
+            if(!this.isLoggedIn()) { return false; }
+            var prefix = "http://www.firefile.at/user/" + Firebug.getPref("extensions.firefile", "username") + "/";
+            if(href.substr(0, prefix.length) == prefix) { return true; }
+            return false;
         },
-		onSaveSuccess: function(success, styleindex, msg) {
-			Firebug.FireFile.setStatus("closed");
-			Firebug.FireFile.updateNotify("fferror", 8, -1000, msg);
-			Firebug.FireFile.updateNotify("ffnotify", 4, 1, msg);
-		},
 		getHrefInAllowedSites: function(href) {
 
 		    // ALWAYS ALLOW 'UPLOADING' OF LOCAL FILES
             if(this.isFileLocal(href)) { return true; }
+            
+            // Allways allow uploading to current firefile user
+            if(this.isServerStylesheetUrl(href)) { return true; }
 
 		    // CHECK FOR MATCHING SITE HOST
             var re = new RegExp('^((?:https|http|file)?\://?/[^/]+)', 'im');
@@ -1118,10 +916,6 @@ with (Domplate) {
 		    }else{
 		        return false;
 		    }
-		},
-		onSaveError: function(success, styleindex, msg) {
-			Firebug.FireFile.setStatus("closed");
-			Firebug.FireFile.updateNotify("fferror", 8, 1, msg);
 		},
 		updateNotify: function(barid, priority, change, msg, msgOnly) {
 
@@ -1158,9 +952,7 @@ with (Domplate) {
 				notifyBox.removeNotification(notifyBox.getNotificationWithValue(barid));
 			}else{
 				// UPDATE LABEL
-
 				var label = "";
-
 				if(msgOnly) {
 				    label += Firebug.FireFile.__(msg);
 				}else{
@@ -1182,14 +974,55 @@ with (Domplate) {
 			}
 		},
         togglePref: function(name, callback){
-            Firebug.setPref(FireFilePrefDomain, name, !this.prefs[name]);
+            Firebug.setPref("extensions.firefile", name, !this.prefs[name]);
             this.prefs[name] = !this.prefs[name];
             if(callback != undefined) {
                 callback.call(this);
             }
         },
-        encodeData: function(str) {
-            return encodeURIComponent(window.btoa(escape(str))); //.replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
+        restartFirebug: function(on)
+        {
+            
+            Components.utils.import("resource://gre/modules/Services.jsm");
+            Services.obs.notifyObservers(null, "startupcache-invalidate", null);
+
+            var BOOTSTRAP_REASONS = {
+                APP_STARTUP     : 1,
+                APP_SHUTDOWN    : 2,
+                ADDON_ENABLE    : 3,
+                ADDON_DISABLE   : 4,
+                ADDON_INSTALL   : 5,
+                ADDON_UNINSTALL : 6,
+                ADDON_UPGRADE   : 7,
+                ADDON_DOWNGRADE : 8
+            };
+            var XPIProviderBP = Components.utils.import("resource://gre/modules/XPIProvider.jsm");
+            var id = "firebug@software.joehewitt.com";
+            var XPIProvider = XPIProviderBP.XPIProvider;
+            var file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
+            file.persistentDescriptor = XPIProvider.bootstrappedAddons[id].descriptor;
+
+            var t1 = Date.now();
+            XPIProvider.callBootstrapMethod(id, XPIProvider.bootstrappedAddons[id].version,
+                                    XPIProvider.bootstrappedAddons[id].type, file,
+                                    "shutdown", BOOTSTRAP_REASONS.ADDON_DISABLE);
+            FBTrace.sysout("shutdown time :" + (Date.now() - t1) + "ms");
+            if (!on)
+                return;
+
+            t1 = Date.now()
+            XPIProvider.callBootstrapMethod(id, XPIProvider.bootstrappedAddons[id].version,
+                                    XPIProvider.bootstrappedAddons[id].type, file,
+                                    "startup", BOOTSTRAP_REASONS.APP_STARTUP);
+            FBTrace.sysout("startup time :" + (Date.now() - t1) + "ms");
+        },
+        addDebugInfo: function(title, data) {
+            if(Firebug.FireFile.prefs.enable_debug_mode) {
+                Firebug.Console.log(title);
+                for(var key in data) {
+                    Firebug.Console.log([key+":", data[key]]);
+                }
+            }
         }
     });
     

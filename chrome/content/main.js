@@ -3,8 +3,7 @@
 define([
     "firebug/lib/trace",
     "firefile/firefileModule",
-    "firefile/firefilePanel",
-    "firefile/lib/csstransformer"
+    "firefile/firefilePanel"
 ],
 function(FBTrace, FirefileModule, FirefilePanel) {
 
@@ -20,6 +19,7 @@ function(FBTrace, FirefileModule, FirefilePanel) {
             Firebug.registerPanel(FirefilePanel);
 
             Firebug.registerStylesheet("chrome://firefile/skin/skin.css");
+            Firebug.registerStylesheet("chrome://firefile/skin/widgets.css");
             Firebug.registerStringBundle("chrome://firefile/locale/firefile.properties");
 
         },
@@ -34,6 +34,7 @@ function(FBTrace, FirefileModule, FirefilePanel) {
             Firebug.unregisterPanel(FirefilePanel);
             
             Firebug.unregisterStylesheet("chrome://firefile/skin/skin.css");
+            Firebug.unregisterStylesheet("chrome://firefile/skin/widgets.css");
             Firebug.unregisterStringBundle("chrome://firefile/locale/firefile.properties");
 
         }

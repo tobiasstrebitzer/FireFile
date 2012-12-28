@@ -1,3 +1,4 @@
+## [Install FireFile from firefile.at](http://www.firefile.at)
 ## [Install FireFile from Mozilla Addons](https://addons.mozilla.org/de/firefox/addon/firefile/)
 
 ## FireFile Firebug Extension
@@ -12,8 +13,13 @@ Download the latest version from github (Download- Button) in ".zip" file format
 ## FEATURES
 
 * Remote saving css changes
+* firefile.at webservice integration (see www.firefile.at)
 
 ## Version History
+
+* 0.9.2 (28.12.2012)
+** Fixed bug that caused firefile not to register sites if the addon bar icon was not added
+** Implemented FireFile Webservice feature
 
 * 0.9.1 (13.12.2012)
 ** Added compatibility for Firefox 17 (Firebug 1.11)

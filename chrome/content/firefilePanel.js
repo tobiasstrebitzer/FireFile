@@ -7,8 +7,10 @@ define([
     "firebug/lib/dom",
     "firebug/lib/domplate",
     "firebug/lib/locale",
+    "firefile/lib/jquery",
+    "firefile/lib/csssaver"
 ],
-function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale) {
+function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale, $, CssSaver) {
     
 with (Domplate) {
 
@@ -64,7 +66,9 @@ with (Domplate) {
             }
         },
         saveChange: function(e) {
-            Firebug.FireFile.saveIconClicked(e.target);
+            var node = Dom.getAncestorByClass(e.target, "FireFileChangeHook");
+            var href = node.getAttribute('styleurl');
+            CssSaver.save(href);
         },
         cancelChange: function(e) {
             var node = Dom.getAncestorByClass(e.target, "FireFileChangeHook");
@@ -82,25 +86,100 @@ with (Domplate) {
     });
 
     function FireFilePanel() {}
-
-    FireFilePanel.prototype = Obj.extend(Firebug.Panel,{
-
+    
+    FireFilePanel.prototype = Obj.extend(Firebug.Panel, {
         template: domplate({
-            changesList:
-                DIV({"class": "cssFireFileSitesPanel",  role : 'presentation'},
+            firefilePanelLoggedIn:
+                DIV({id: "cssFireFilePanel",  role: 'presentation'},
+                    TAG("$changesListPanel", {sites: "$sites"}),
+                    TAG("$accountPanelLoggedIn")
+                ),
+            
+            firefilePanelLoggedOut:
+                DIV({id: "cssFireFilePanel",  role: 'presentation'},
+                    TAG("$changesListPanel", {sites: "$sites"}),
+                    TAG("$accountPanelLoggedOut"),
+                    TAG("$accountPanel")
+                ),
+            
+            accountPanelLoggedIn:
+                H1({style: "overflow: hidden;", class: "groupHeader cssFireFileHeaderSlim"}, 
+                    DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
+                        "$this|getUsername@firefile.at",
+                        SPAN({class: "cssFireFileHostLabel"},
+                            A({"href": "http://www.firefile.at/stylesheets", target: "_blank"}, "Edit Settings")
+                        )
+                    ),
+                    DIV({class: "cssFireFileSiteIconContainer"},
+                        SPAN({class: "cssFireFileSiteIcon cssFireFileLogout", "title": Locale.$STR("Logout", "strings_firefile"), onclick: "$onLogoutClick"})
+                    )                    
+                ),
+                
+            accountPanelLoggedOut:    
+                H1({style: "overflow: hidden;", class: "groupHeader cssFireFileHeaderSlim"}, "FireFile Account"),
+
+            accountPanel:
+                DIV({id: "cssFireFileAccountPanel", class: "cssFireFileFlexBox", role: 'presentation'},
+                    DIV({id: 'cssFireFileLoginBox', class: "cssFireFilePanelBox"}, 
+                        DIV({class: "cssFireFilePanelBoxHeader"}, "Login to your account"),
+                        P({class: "form-row"},
+                            LABEL({for: "FireFileInputUsername"}, "Username:"), "&nbsp;",
+                            INPUT({id: "FireFileInputUsername", type: "text", class: "cssFireFileInputBox", placeholder: "Your username", value: "$this|getUsername"})
+                        ),
+                        P({class: "form-row"},
+                            LABEL({for: "FireFileInputPassword"}, "Password:"), "&nbsp;",
+                            INPUT({id: "FireFileInputPassword", type: "password", class: "cssFireFileInputBox"})
+                        ),
+                        P({class: "form-row"},
+                            LABEL(""),
+                            INPUT({id: "FireFileInputSubmit", type: "submit", "onclick": "$onLoginClick", class: "cssFireFileInputButton", "value": "Login"})
+                        )
+                    ),
+                    DIV({id: 'cssFireFileRegisterBox', class: "cssFireFilePanelBox cssFireFilePanelBoxLast"}, 
+                        DIV({class: "cssFireFilePanelBoxHeader"}, "Create a new account"),
+                        P({class: "form-row"},
+                            IMG({src: "chrome://FireFile/skin/firefile_32.png"})
+                        ),
+                        P({class: "form-row"},
+                            INPUT({type: "button", "onclick": "$onRegisterClick", class: "cssFireFileInputButton", "value": "Register now"})
+                        )
+                    )
+                    /*,
+                    DIV({id: 'cssFireFileRegisterBox', class: "cssFireFilePanelBox cssFireFilePanelBoxLast"}, 
+                        DIV({class: "cssFireFilePanelBoxHeader"}, "Create a new account"),
+                        P({class: "form-row"},
+                            LABEL({for: "FireFileInputRegisterUsername"}, "Username:"), "&nbsp;",
+                            INPUT({id: "FireFileInputRegisterUsername", type: "text", class: "cssFireFileInputBox", "placeholder": "Your username"})
+                        ),
+                        P({class: "form-row"},
+                            LABEL({for: "FireFileInputRegisterPassword"}, "Password:"), "&nbsp;",
+                            INPUT({id: "FireFileInputRegisterPassword", type: "password", class: "cssFireFileInputBox"})
+                        ),
+                        P({class: "form-row"},
+                            LABEL({for: "FireFileInputRegisterPasswordRepeat"}, "Repeat:"), "&nbsp;",
+                            INPUT({id: "FireFileInputRegisterPasswordRepeat", type: "password", class: "cssFireFileInputBox"})
+                        ),
+                        P({class: "form-row"},
+                            LABEL(""),
+                            INPUT({id: "FireFileInputRegisterSubmit", type: "submit", onclick: "$onRegisterClick", class: "cssFireFileInputButton", "value": "Register"})
+                        )
+                    )*/
+                ),
+            changesListPanel:
+                DIV({class: "cssFireFileSitesPanel",  role: 'presentation'},
                     DIV({role : 'list', 'aria-label' : "firefile" },
                         FOR("site", "$sites",
                             H1({style: "overflow: hidden;", class: "cssInheritHeader groupHeader focusRow FireFileSiteHook", role : 'listitem', siteurl: "$site.url"},
                                 DIV({class: "cssFireFileHostLabel", style: "width: 2000px; float: left; display: inline;"},
                                     "$site.label",
                                     SPAN({class: "cssFireFileHostLabel"},
-                                        A({href: "$site.url", target: "_blank"}, "$site.url|shortenUrl")
+                                        A({"href": "$site.url", "target": "_blank"}, "$site.url|shortenUrl")
                                     )
                                 ),
                                 DIV({class: "cssFireFileSiteIconContainer"},
-                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostDelete", title: Locale.$STR("TrashIconTooltip", "strings_firefile"), onclick: "$onDeleteClick"}),
-                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostEdit", title: Locale.$STR("RenameIconTooltip", "strings_firefile"), onclick: "$onEditClick"}),
-                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostAutoSave cssFireFileHostAutoSave$site.autosave|parseBool", title: Locale.$STR("AutoSaveIconTooltip", "strings_firefile"), onclick: "$onAutoSaveClick"})
+                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostDelete", "title": Locale.$STR("TrashIconTooltip", "strings_firefile"), onclick: "$onDeleteClick"}),
+                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostEdit", "title": Locale.$STR("RenameIconTooltip", "strings_firefile"), onclick: "$onEditClick"}),
+                                    SPAN({class: "cssFireFileSiteIcon cssFireFileHostAutoSave cssFireFileHostAutoSave$site.autosave|parseBool", "title": Locale.$STR("AutoSaveIconTooltip", "strings_firefile"), "onclick": "$onAutoSaveClick"})
                                 )
                             ),
                             DIV({role : 'group'},
@@ -111,35 +190,57 @@ with (Domplate) {
                         )
                     )
                 ),
-            helpView:    
-                DIV({"class": "cssFireFileSitesPanel",  role : 'presentation'},
-                    DIV({role : 'list', 'aria-label' : "firefile" },
-                        H1({class: "cssInheritHeader groupHeader focusRow", role : 'listitem'},
-                            "$FireFileHelpTitle"
-                        ),
-                        H1({class: "cssInheritHeader groupHeader focusRow", role : 'listitem'},
-                            "$DemoAccountTitle: ",
-                            SPAN({class: "cssFireFileHostLabel"},
-                                A({href: "$DemoAccountUrl", target: "_blank"}, "$DemoAccountUrl")
-                            )
-                        ),
-                        DIV({class: "cssFireFileIntroduction"}, SPAN("$DemoAccountDescription")),
-                        H1({class: "cssInheritHeader groupHeader focusRow", role : 'listitem'},
-                            "$HelpTitle: ",
-                            SPAN({class: "cssFireFileHostLabel"},
-                                A({href: "$HelpUrl", target: "_blank"}, "$HelpUrl")
-                            )
-                        ),
-                        DIV({class: "cssFireFileIntroduction"}, SPAN("$HelpDescription")),
-                        H1({class: "cssInheritHeader groupHeader focusRow", role : 'listitem'},
-                            "$UserGuideTitle: ",
-                            SPAN({class: "cssFireFileHostLabel"},
-                                A({href: "$UserGuideUrl", target: "_blank"}, "$UserGuideUrl")
-                            )
-                        ),
-                        DIV({class: "cssFireFileIntroduction"}, SPAN("$UserGuideDescription"))
-                    )
-                ),                
+            getUsername: function() {
+                var username = Firebug.getPref("extensions.firefile", "username");
+                if(!username) {
+                    return "";
+                }else{
+                    return username;
+                }
+                
+            },
+            onLogoutClick: function(e) {
+
+                Firebug.setPref("extensions.firefile", "token", "");
+                Firebug.currentContext.getPanel("firefile").select();
+                
+            },
+            onLoginClick: function(e) {
+                
+                var doc = e.target.ownerDocument;
+                var username = $(doc).find("#FireFileInputUsername").val();
+                var password = $(doc).find("#FireFileInputPassword").val();
+                
+                $(doc).find("#FireFileInputSubmit").attr("disabled", "disabled");
+                
+                Firebug.setPref("extensions.firefile", "username", username);
+                
+                $.ajax({
+                    url: "http://www.firefile.at/api/login",
+                    dataType: 'json',
+                    type: 'POST',
+                    data: {
+                        username: username,
+                        password: password
+                    },
+                    success: function(response) {
+                        if(response.success) {
+                           Firebug.setPref("extensions.firefile", "token", response.token); 
+                        }
+                        $(doc).find("#FireFileInputSubmit").removeAttr("disabled");
+                        Firebug.currentContext.getPanel("firefile").select();
+                    },
+                    error: function(response) {
+                        $(doc).find("#FireFileInputSubmit").removeAttr("disabled");
+                    }
+                });
+            },
+            onRestartClick: function(e) {
+                Firebug.FireFile.restartFirebug(true);
+            },
+            onRegisterClick: function(e) {
+                top.gBrowser.selectedTab = top.gBrowser.addTab("http://www.firefile.at/register/");
+            },
             orEmpty: function(data) {
                 if(!data) {
                     return [];
@@ -208,47 +309,36 @@ with (Domplate) {
                 }
             }
         }),
-        
         select: function() {
             
             // LOAD FULL SITES ARRAY AGAIN
             var sites = Firebug.FireFile.getSitesArray();
             var changes = Firebug.FireFile.modifiedStylesheets;
             
-            if(sites.length > 0) {
-                
-                // PREPARE CHANGES IN SITES ARRAY
-                for(var i=0;i<sites.length;i++){
-                    sites[i].changes = [];
-                    sites[i].changeCount = 0;
-                }
-                
-                // BUILD SITES / CHANGES ARRAY
-                for(var i=0;i<changes.length;i++) {
-                    var related_site = Firebug.FireFile.getHrefInAllowedSites(changes[i].href);
-                    if(related_site) {
-                        var host = Firebug.FireFile.getHostFromHref(related_site.url);
+            // PREPARE CHANGES IN SITES ARRAY
+            for(var i=0;i<sites.length;i++){
+                sites[i].changes = [];
+                sites[i].changeCount = 0;
+            }
 
-                        // ADD CHANGES TO STYLE
+            // BUILD SITES / CHANGES ARRAY
+            for(var i=0;i<changes.length;i++) {
+                var related_site = Firebug.FireFile.getHrefInAllowedSites(changes[i].href);
+                
+                if(related_site) {
+
+                    if(related_site !== true) {
                         related_site.changes.push(changes[i]);
-                        related_site.changeCount++;
+                        related_site.changeCount++;                        
                     }
+                    
                 }
-                var result = this.template.changesList.replace({sites: sites}, this.panelNode);
+            }
+                
+            if(Firebug.getPref("extensions.firefile", "token") != "") { 
+                this.template.firefilePanelLoggedIn.replace({sites: sites}, this.panelNode);
             }else{
-                var translation = {
-                    FireFileHelpTitle: Firebug.FireFile.__("FireFileHelpTitle"),
-                    DemoAccountDescription: Firebug.FireFile.__("DemoAccountDescription"),
-                    DemoAccountTitle: Firebug.FireFile.__("DemoAccountTitle"),
-                    DemoAccountUrl: Firebug.FireFile.__("DemoAccountUrl"),
-                    HelpDescription: Firebug.FireFile.__("HelpDescription"),
-                    HelpTitle: Firebug.FireFile.__("HelpTitle"),
-                    HelpUrl: Firebug.FireFile.__("HelpUrl"),
-                    UserGuideDescription: Firebug.FireFile.__("UserGuideDescription"),
-                    UserGuideTitle: Firebug.FireFile.__("UserGuideTitle"),
-                    UserGuideUrl: Firebug.FireFile.__("UserGuideUrl")
-                };
-                var result = this.template.helpView.replace(translation, this.panelNode);
+                this.template.firefilePanelLoggedOut.replace({sites: sites}, this.panelNode);
             }
         },
 

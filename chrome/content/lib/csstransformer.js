@@ -12,7 +12,7 @@ function(Obj, FBTrace, Xpcom, Dom, Domplate, Locale) {
     
 with (Domplate) {
 
-	Firebug.FireFile.CssTransformer = Obj.extend(Firebug.Module, {
+	var CssTransformer = {
 
 		commentMap: [],
 		propertyCommentMap: [],
@@ -26,7 +26,7 @@ with (Domplate) {
 			"-moz-box-shadow": ["box-shadow", "-webkit-box-shadow", "-khtml-box-shadow"]
 		},
 
-		generateCSSContents: function(styleSheet, compress) {
+		generateCSSContents: function(styleSheet) {
 
             var retVal = "";
 
@@ -56,20 +56,6 @@ with (Domplate) {
                 }
 
 			}
-
-			// Check if compression is off
-			if(!compress) {
-			    // beautify css
-			    retVal = this.cssbeautify(retVal, {
-			        indent: '    '
-			    });
-
-			    // fix comments display
-			    retVal = this.fixCommentsOutput(retVal);
-			}
-
-			// Fix color values
-			retVal = this.rgbToHex(retVal);
 
 			return retVal;
         },
@@ -750,8 +736,8 @@ with (Domplate) {
             return formatted;
         }
 
-	});
+	};
     
-    return Firebug.FireFile.CssTransformer;
+    return CssTransformer;
 
 }});
