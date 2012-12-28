@@ -115,7 +115,7 @@ function firebugFrameLoad(Firebug)
 {
     
     // Register trace prefix
-    Firebug.registerTracePrefix("fireFile;", "DBG_FIREFILE", true, "chrome://firefile/skin/skin.css");
+    Firebug.registerTracePrefix("fireFile;", "DBG_FIREFILE", true);
 
     // Register firefile extension
     var config = {id: "firefile@strebitzer.at"};

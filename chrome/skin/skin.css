@@ -1,9 +1,5 @@
 /* WEBSERVICE */
 
-h1.cssFireFileHeaderSlim {
-
-}
-
 div#cssFireFileAccountPanel {
     width: 100%;
 }
@@ -33,7 +29,7 @@ div.cssFireFilePanelBoxHeader {
     padding: 0px;
     margin: 0px;
     line-height: 16px;
-    background: -moz-linear-gradient(#F5F5F5, #EEEEEE);
+    background: linear-gradient(#F5F5F5, #EEEEEE);
     border-bottom: 1px solid #CCCCCC;
 }
 
