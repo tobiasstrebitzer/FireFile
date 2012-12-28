@@ -18,3 +18,7 @@ task :build do
     FileUtils.rm_rf('xpi/firefile-#{version}.xpi')
     sh %{zip -r xpi/firefile-#{version}.xpi . -x@.zipignore}
 end
+
+task :createtag do
+    sh %{git tag -a v#{version} -m "version #{version}"}
+end
